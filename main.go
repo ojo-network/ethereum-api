@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"math/big"
 	"os"
 	"os/signal"
@@ -80,10 +81,11 @@ func main() {
 			if err := uniswapContract.UnpackLog(event, "Swap", log); err != nil {
 				fmt.Println(err)
 			}
-			// data, err := abi.ABI.Unpack(parsedABI, "Swap", log.Data)
-			// if err != nil {
-			// 	fmt.Println(err)
-			// }
+			amount0 := event.Amount0 // use this number for volume
+			amount1 := event.Amount1
+
+			amount0Abs := math.Abs(float64(amount0.Int64()))
+
 			fmt.Printf("%+v\n", event)
 		}
 	}
