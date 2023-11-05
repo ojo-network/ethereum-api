@@ -14,6 +14,12 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const (
+	nodeUrl           = "wss://ethereum.publicnode.com"
+	poolAddress       = "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640"
+	WETH_USDC_ADDRESS = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+)
+
 func init() {
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 }
@@ -66,7 +72,11 @@ func main() {
 	// begin the websocket server process
 	g.Go(func() error {
 		defer cancel()
-		err := client.WatchSwapEvent(i, ctx)
+		c, err := client.NewClient(nodeUrl, i, logger)
+		if err != nil {
+			return err
+		}
+		err = c.WatchSwapEvent(WETH_USDC_ADDRESS, ctx)
 		logger.Info().Msg("ethereum client exited")
 		return err
 	})

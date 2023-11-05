@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -12,62 +11,74 @@ import (
 	"github.com/ojo-network/ethereum-api/abi"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/ojo-network/indexer/utils"
+	"github.com/rs/zerolog"
 )
 
-const (
-	nodeUrl     = "wss://ethereum.publicnode.com"
-	poolAddress = "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640"
-)
+type Client struct {
+	nodeUrl   string
+	ethClient *ethclient.Client
+	indexer   *indexer.Indexer
+	logger    zerolog.Logger
+}
 
-func WatchSwapEvent(i *indexer.Indexer, ctx context.Context) error {
+func NewClient(
+	nodeUrl string,
+	indexer *indexer.Indexer,
+	logger zerolog.Logger,
+) (*Client, error) {
 	ethClient, err := ethclient.Dial(nodeUrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return &Client{
+		nodeUrl:   nodeUrl,
+		ethClient: ethClient,
+		indexer:   indexer,
+		logger:    logger,
+	}, nil
+}
 
-	poolFilterer, err := abi.NewPoolFilterer(common.HexToAddress(poolAddress), ethClient)
+func (c *Client) WatchSwapEvent(poolAddress string, ctx context.Context) error {
+	poolFilterer, err := abi.NewPoolFilterer(common.HexToAddress(poolAddress), c.ethClient)
 	if err != nil {
 		return err
 	}
 
 	eventSink := make(chan *abi.PoolSwap)
-
 	opts := &bind.WatchOpts{Start: nil, Context: ctx}
 	subscription, err := poolFilterer.WatchSwap(opts, eventSink, nil, nil)
 	if err != nil {
 		return err
 	}
 
-	srvErrCh := make(chan error, 1)
-
-	go func() {
-		select {
-		case <-ctx.Done():
-			subscription.Unsubscribe()
-			srvErrCh <- nil
-			break
-		case err := <-subscription.Err():
-			srvErrCh <- err
-			break
-		case event := <-eventSink:
-			swap := indexer.Swap{
-				BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
-				Timestamp:    utils.CurrentUnixTime(),
-				ExchangePair: "WETH/ETH",
-				AmountIn:     sdkmath.LegacyNewDecFromBigInt(event.Amount0),
-				AmountOut:    sdkmath.LegacyNewDecFromBigInt(event.Amount1),
-			}
-			i.AddSwap(swap)
-			fmt.Println(event)
-		}
-	}()
-
 	for {
 		select {
 		case <-ctx.Done():
+			c.logger.Info().Msg("unsubscribing from swap events")
+			subscription.Unsubscribe()
 			return nil
-		case err = <-srvErrCh:
+		case err := <-subscription.Err():
 			return err
+		case event := <-eventSink:
+			swap := convertEventToSwap(event)
+			c.logger.Info().Interface("swap", swap).Str("price", swap.CalcPrice().String()).Msg("swap event received")
+			c.indexer.AddSwap(swap)
 		}
+	}
+}
+
+func convertEventToSwap(event *abi.PoolSwap) indexer.Swap {
+	amount0 := sdkmath.LegacyNewDecFromBigInt(event.Amount0)
+	amount1 := sdkmath.LegacyNewDecFromBigInt(event.Amount1)
+
+	amount0Abs := amount0.Abs()
+	amount1Abs := amount1.Abs()
+
+	return indexer.Swap{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: "WETH/USDC",
+		AmountIn:     amount0Abs,
+		AmountOut:    amount1Abs,
 	}
 }
