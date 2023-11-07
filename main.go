@@ -6,8 +6,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/ojo-network/ethereum-api/client"
 	"github.com/ojo-network/ethereum-api/config"
 	"github.com/ojo-network/indexer/indexer"
@@ -59,39 +57,36 @@ func main() {
 		cancel()
 	}
 
-	g, _ := errgroup.WithContext(ctx)
+	// g, _ := errgroup.WithContext(ctx)
 
-	// begin the websocket server process
-	g.Go(func() error {
-		defer cancel()
-		err := s.StartWebsocketAPI(ctx, logger, i)
-		logger.Info().Msg("websocket server exited")
-		return err
-	})
+	// websocket server process
+	// g.Go(func() error {
+	// 	defer cancel()
+	// 	err := s.StartWebsocketAPI(ctx, logger, i)
+	// 	logger.Info().Msg("websocket server exited")
+	// 	return err
+	// })
 
-	// begin the websocket server process
-	g.Go(func() error {
-		defer cancel()
-		c, err := client.NewClient(cfg.NodeUrl, i, logger)
-		if err != nil {
-			return err
-		}
-
-		for _, pool := range cfg.Pools {
-			// These need to each be in their own go routines
-			// If one fails, the others should continue
-			err = c.WatchSwapEvent(pool, ctx)
-			if err != nil {
-				return err
-			}
-		}
-
-		logger.Info().Msg("ethereum client exited")
-		return err
-	})
-
-	err = g.Wait()
+	// client process watching for swap events
+	//g.Go(func() error {
+	//defer cancel()
+	c, err := client.NewClient(cfg.NodeUrl, i, logger)
 	if err != nil {
-		logger.Error().Err(err).Send()
+		logger.Error().Err(err).Msg("error creating ethereum client")
+		cancel()
+	}
+	c.WatchAndRestartPools(ctx, cfg.Pools)
+	//logger.Info().Msg("ethereum client exited")
+	//return err
+	//})
+
+	// err = g.Wait()
+	// if err != nil {
+	// 	logger.Error().Err(err).Send()
+	// }
+
+	err = s.StartWebsocketAPI(ctx, logger, i)
+	if err != nil {
+		logger.Error().Err(err).Msg("websocket api error")
 	}
 }

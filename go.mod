@@ -2,7 +2,7 @@ module github.com/ojo-network/ethereum-api
 
 go 1.20
 
-// replace github.com/ojo-network/indexer => /home/apollo/Workspace/umee/indexer
+replace github.com/ojo-network/indexer => /home/apollo/Workspace/ojo-network/indexer
 
 require (
 	cosmossdk.io/math v1.1.2

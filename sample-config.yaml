@@ -7,3 +7,8 @@ pools:
     quote_decimal: 6
     invert_price: true
 
+  - exchange_pair: "WBTC/WETH"
+    address: "0x2f5e87c9312fa29aed5c179e456625d79015299c"
+    base_decimal: 6
+    quote_decimal: 8
+    invert_price: false
