@@ -74,7 +74,7 @@ func (p *Pool) SqrtPriceX96ToDec(sqrtPriceX96 *big.Int) sdkmath.LegacyDec {
 	// To get the adjusted price, divide the result by (10^18 / 10^6)
 	basePower := sdkmath.LegacyNewDec(10).Power(p.BaseDecimal)
 	quotePower := sdkmath.LegacyNewDec(10).Power(p.QuoteDecimal)
-	adjPower := basePower.Quo(quotePower)
+	adjPower := quotePower.Quo(basePower)
 
 	adjPrice := price.Quo(adjPower)
 
