@@ -9,10 +9,20 @@ import (
 	"github.com/ojo-network/indexer/utils"
 )
 
+func convertEventToSpotPrice(event *abi.PoolSwap) indexer.SpotPrice {
+	return indexer.SpotPrice{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: "WETH/USDC",
+		Price:        sqrtPriceX96ToDec(event.SqrtPriceX96),
+	}
+}
+
 func convertEventToSwap(event *abi.PoolSwap) indexer.Swap {
 	amount1 := sdkmath.LegacyNewDecFromBigInt(event.Amount1)
 	amount1Abs := amount1.Abs()
 	// TODO: Retrieve the denom decimals from the contract automatically
+	// TODO: Retrieve the exchange pair from the contract automatically
 
 	return indexer.Swap{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),

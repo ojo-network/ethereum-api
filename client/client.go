@@ -58,8 +58,10 @@ func (c *Client) WatchSwapEvent(poolAddress string, ctx context.Context) error {
 			return err
 		case event := <-eventSink:
 			swap := convertEventToSwap(event)
+			spotPrice := convertEventToSpotPrice(event)
 			c.logger.Info().Interface("swap", swap).Msg("swap event received")
 			c.indexer.AddSwap(swap)
+			c.indexer.AddPrice(spotPrice)
 		}
 	}
 }
