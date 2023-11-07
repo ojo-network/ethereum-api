@@ -3,14 +3,11 @@ package client
 import (
 	"context"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ojo-network/ethereum-api/abi"
 	"github.com/ojo-network/indexer/indexer"
-	"github.com/ojo-network/indexer/utils"
 	"github.com/rs/zerolog"
 )
 
@@ -61,24 +58,8 @@ func (c *Client) WatchSwapEvent(poolAddress string, ctx context.Context) error {
 			return err
 		case event := <-eventSink:
 			swap := convertEventToSwap(event)
-			c.logger.Info().Interface("swap", swap).Str("price", swap.CalcPrice().String()).Msg("swap event received")
+			c.logger.Info().Interface("swap", swap).Msg("swap event received")
 			c.indexer.AddSwap(swap)
 		}
-	}
-}
-
-func convertEventToSwap(event *abi.PoolSwap) indexer.Swap {
-	amount0 := sdkmath.LegacyNewDecFromBigInt(event.Amount0)
-	amount1 := sdkmath.LegacyNewDecFromBigInt(event.Amount1)
-
-	amount0Abs := amount0.Abs()
-	amount1Abs := amount1.Abs()
-
-	return indexer.Swap{
-		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
-		Timestamp:    utils.CurrentUnixTime(),
-		ExchangePair: "WETH/USDC",
-		AmountIn:     amount0Abs,
-		AmountOut:    amount1Abs,
 	}
 }

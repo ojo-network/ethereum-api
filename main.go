@@ -16,7 +16,6 @@ import (
 
 const (
 	nodeUrl           = "wss://ethereum.publicnode.com"
-	poolAddress       = "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640"
 	WETH_USDC_ADDRESS = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
 )
 
