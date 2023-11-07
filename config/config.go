@@ -1,23 +1,46 @@
-package client
+package config
 
 import (
 	"math/big"
+	"os"
 
 	sdkmath "cosmossdk.io/math"
+	"gopkg.in/yaml.v3"
+
 	"github.com/ojo-network/ethereum-api/abi"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/ojo-network/indexer/utils"
 )
 
-type Pool struct {
-	Address      string
-	ExchangePair string
-	BaseDecimal  uint64
-	QuoteDecimal uint64
-	InvertPrice  bool
+type Config struct {
+	NodeUrl string `yaml:"node_url"`
+	Pools   []Pool `yaml:"pools"`
 }
 
-func (p *Pool) convertEventToSpotPrice(event *abi.PoolSwap) indexer.SpotPrice {
+type Pool struct {
+	Address      string `yaml:"address"`
+	ExchangePair string `yaml:"exchange_pair"`
+	BaseDecimal  uint64 `yaml:"base_decimal"`
+	QuoteDecimal uint64 `yaml:"quote_decimal"`
+	InvertPrice  bool   `yaml:"invert_price"`
+}
+
+func ParseConfig() (*Config, error) {
+	config := Config{}
+
+	yamlFile, err := os.ReadFile("config.yaml")
+	if err != nil {
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(yamlFile, &config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
+}
+
+func (p *Pool) ConvertEventToSpotPrice(event *abi.PoolSwap) indexer.SpotPrice {
 	return indexer.SpotPrice{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
@@ -26,7 +49,7 @@ func (p *Pool) convertEventToSpotPrice(event *abi.PoolSwap) indexer.SpotPrice {
 	}
 }
 
-func (p *Pool) convertEventToSwap(event *abi.PoolSwap) indexer.Swap {
+func (p *Pool) ConvertEventToSwap(event *abi.PoolSwap) indexer.Swap {
 	return indexer.Swap{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),

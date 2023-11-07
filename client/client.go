@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ojo-network/ethereum-api/abi"
+	"github.com/ojo-network/ethereum-api/config"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/rs/zerolog"
 )
@@ -36,7 +37,7 @@ func NewClient(
 }
 
 func (c *Client) WatchSwapEvent(
-	pool Pool,
+	pool config.Pool,
 	ctx context.Context,
 ) error {
 	poolFilterer, err := abi.NewPoolFilterer(common.HexToAddress(pool.Address), c.ethClient)
@@ -60,8 +61,8 @@ func (c *Client) WatchSwapEvent(
 		case err := <-subscription.Err():
 			return err
 		case event := <-eventSink:
-			swap := pool.convertEventToSwap(event)
-			spotPrice := pool.convertEventToSpotPrice(event)
+			swap := pool.ConvertEventToSwap(event)
+			spotPrice := pool.ConvertEventToSpotPrice(event)
 			c.logger.Info().Interface("swap", swap).Msg("swap event received")
 			c.indexer.AddSwap(swap)
 			c.indexer.AddPrice(spotPrice)

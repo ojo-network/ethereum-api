@@ -1,0 +1,9 @@
+---
+node_url: "wss://ethereum.publicnode.com"
+pools:
+  - exchange_pair: "WETH/USDC"
+    address: "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+    base_decimal: 18
+    quote_decimal: 6
+    invert_price: true
+

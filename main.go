@@ -9,14 +9,10 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/ojo-network/ethereum-api/client"
+	"github.com/ojo-network/ethereum-api/config"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/ojo-network/indexer/server"
 	"github.com/rs/zerolog"
-)
-
-const (
-	nodeUrl           = "wss://ethereum.publicnode.com"
-	WETH_USDC_ADDRESS = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
 )
 
 func init() {
@@ -42,17 +38,22 @@ func main() {
 		cancel()
 	}()
 
+	cfg, err := config.ParseConfig()
+	if err != nil {
+		logger.Fatal().Err(err).Msg("error parsing config")
+	}
+
 	// Initialize indexer
 	i := indexer.NewIndexer(logger, ctx)
 
 	// Start websocket server and broadcast prices
-	cfg := server.ServerConfig{
+	serverCfg := server.ServerConfig{
 		ListenAddr:        "0.0.0.0:5005",
 		WriteTimeout:      "20s",
 		ReadTimeout:       "20s",
 		BroadcastInterval: "5s",
 	}
-	s, err := server.NewServer(logger, cfg)
+	s, err := server.NewServer(logger, serverCfg)
 	if err != nil {
 		logger.Error().Err(err).Msg("error creating server")
 		cancel()
@@ -71,20 +72,20 @@ func main() {
 	// begin the websocket server process
 	g.Go(func() error {
 		defer cancel()
-		c, err := client.NewClient(nodeUrl, i, logger)
+		c, err := client.NewClient(cfg.NodeUrl, i, logger)
 		if err != nil {
 			return err
 		}
-		// TODO: Retrieve the denom decimals from the contract automatically
-		// TODO: Retrieve the exchange pair from the contract automatically
-		pool := client.Pool{
-			Address:      WETH_USDC_ADDRESS,
-			ExchangePair: "WETH/USDC",
-			BaseDecimal:  18, // amount0
-			QuoteDecimal: 6,  // amount1
-			InvertPrice:  true,
+
+		for _, pool := range cfg.Pools {
+			// These need to each be in their own go routines
+			// If one fails, the others should continue
+			err = c.WatchSwapEvent(pool, ctx)
+			if err != nil {
+				return err
+			}
 		}
-		err = c.WatchSwapEvent(pool, ctx)
+
 		logger.Info().Msg("ethereum client exited")
 		return err
 	})

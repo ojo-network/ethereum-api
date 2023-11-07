@@ -10,6 +10,7 @@ require (
 	github.com/ojo-network/indexer v0.0.2
 	github.com/rs/zerolog v1.31.0
 	golang.org/x/sync v0.4.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
