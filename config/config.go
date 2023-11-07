@@ -14,7 +14,15 @@ import (
 
 type Config struct {
 	NodeUrl string `yaml:"node_url"`
+	Server  Server `yaml:"server"`
 	Pools   []Pool `yaml:"pools"`
+}
+
+type Server struct {
+	ListenAddr        string `yaml:"listen_addr"`
+	WriteTimeout      string `yaml:"write_timeout"`
+	ReadTimeout       string `yaml:"read_timeout"`
+	BroadcastInterval string `yaml:"broadcast_interval"`
 }
 
 type Pool struct {

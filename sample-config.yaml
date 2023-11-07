@@ -1,5 +1,10 @@
 ---
 node_url: "wss://ethereum.publicnode.com"
+server:
+  listen_addr: "0.0.0.0:5005"
+  write_timeout: "20s"
+  read_timeout: "20s"
+  broadcast_interval: "5s"
 pools:
   - name: "Uniswap V3 USDC / WETH Pool"
     exchange_pair: "WETH/USDC"

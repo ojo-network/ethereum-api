@@ -46,10 +46,10 @@ func main() {
 
 	// Start websocket server and broadcast prices
 	serverCfg := server.ServerConfig{
-		ListenAddr:        "0.0.0.0:5005",
-		WriteTimeout:      "20s",
-		ReadTimeout:       "20s",
-		BroadcastInterval: "5s",
+		ListenAddr:        cfg.Server.ListenAddr,
+		WriteTimeout:      cfg.Server.WriteTimeout,
+		ReadTimeout:       cfg.Server.ReadTimeout,
+		BroadcastInterval: cfg.Server.BroadcastInterval,
 	}
 	s, err := server.NewServer(logger, serverCfg)
 	if err != nil {
@@ -57,33 +57,12 @@ func main() {
 		cancel()
 	}
 
-	// g, _ := errgroup.WithContext(ctx)
-
-	// websocket server process
-	// g.Go(func() error {
-	// 	defer cancel()
-	// 	err := s.StartWebsocketAPI(ctx, logger, i)
-	// 	logger.Info().Msg("websocket server exited")
-	// 	return err
-	// })
-
-	// client process watching for swap events
-	//g.Go(func() error {
-	//defer cancel()
 	c, err := client.NewClient(cfg.NodeUrl, i, logger)
 	if err != nil {
 		logger.Error().Err(err).Msg("error creating ethereum client")
 		cancel()
 	}
 	c.WatchAndRestartPools(ctx, cfg.Pools)
-	//logger.Info().Msg("ethereum client exited")
-	//return err
-	//})
-
-	// err = g.Wait()
-	// if err != nil {
-	// 	logger.Error().Err(err).Send()
-	// }
 
 	err = s.StartWebsocketAPI(ctx, logger, i)
 	if err != nil {
