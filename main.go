@@ -45,13 +45,7 @@ func main() {
 	i := indexer.NewIndexer(logger, ctx)
 
 	// Start websocket server and broadcast prices
-	serverCfg := server.ServerConfig{
-		ListenAddr:        cfg.Server.ListenAddr,
-		WriteTimeout:      cfg.Server.WriteTimeout,
-		ReadTimeout:       cfg.Server.ReadTimeout,
-		BroadcastInterval: cfg.Server.BroadcastInterval,
-	}
-	s, err := server.NewServer(logger, serverCfg)
+	s, err := server.NewServer(logger, cfg.Server)
 	if err != nil {
 		logger.Error().Err(err).Msg("error creating server")
 		cancel()

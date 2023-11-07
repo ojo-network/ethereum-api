@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ojo-network/ethereum-api/abi"
-	"github.com/ojo-network/ethereum-api/config"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/ojo-network/indexer/utils"
 	"github.com/rs/zerolog"
@@ -40,7 +39,7 @@ func NewClient(
 
 func (c *Client) WatchAndRestartPools(
 	ctx context.Context,
-	pools []config.Pool,
+	pools []Pool,
 ) {
 	for _, pool := range pools {
 		c.WatchAndRestart(ctx, pool)
@@ -50,7 +49,7 @@ func (c *Client) WatchAndRestartPools(
 
 func (c *Client) PollPoolBalance(
 	ctx context.Context,
-	pool config.Pool,
+	pool Pool,
 ) {
 	go func() {
 		for {
@@ -62,17 +61,17 @@ func (c *Client) PollPoolBalance(
 				poolCaller, err := abi.NewPoolCaller(common.HexToAddress(pool.Address), c.ethClient)
 				if err != nil {
 					c.logger.Error().Err(err).Msgf("error getting %s pool balance", pool.ExchangePair)
-					continue
+					break
 				}
 				slot0, err := poolCaller.Slot0(nil)
 				if err != nil {
 					c.logger.Error().Err(err).Msgf("error getting %s pool balance", pool.ExchangePair)
-					continue
+					break
 				}
 				blockNum, err := c.ethClient.BlockNumber(ctx)
 				if err != nil {
 					c.logger.Error().Err(err).Msgf("error getting %s pool balance", pool.ExchangePair)
-					continue
+					break
 				}
 				spotPrice := indexer.SpotPrice{
 					BlockNum:     indexer.BlockNum(blockNum),
@@ -89,7 +88,7 @@ func (c *Client) PollPoolBalance(
 
 func (c *Client) WatchAndRestart(
 	ctx context.Context,
-	pool config.Pool,
+	pool Pool,
 ) {
 	go func() {
 		for {
@@ -108,7 +107,7 @@ func (c *Client) WatchAndRestart(
 
 func (c *Client) WatchSwapEvent(
 	ctx context.Context,
-	pool config.Pool,
+	pool Pool,
 ) error {
 	poolFilterer, err := abi.NewPoolFilterer(common.HexToAddress(pool.Address), c.ethClient)
 	if err != nil {
