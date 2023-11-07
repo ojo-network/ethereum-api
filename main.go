@@ -75,7 +75,16 @@ func main() {
 		if err != nil {
 			return err
 		}
-		err = c.WatchSwapEvent(WETH_USDC_ADDRESS, ctx)
+		// TODO: Retrieve the denom decimals from the contract automatically
+		// TODO: Retrieve the exchange pair from the contract automatically
+		pool := client.Pool{
+			Address:      WETH_USDC_ADDRESS,
+			ExchangePair: "WETH/USDC",
+			BaseDecimal:  18, // amount0
+			QuoteDecimal: 6,  // amount1
+			InvertPrice:  true,
+		}
+		err = c.WatchSwapEvent(pool, ctx)
 		logger.Info().Msg("ethereum client exited")
 		return err
 	})

@@ -35,8 +35,11 @@ func NewClient(
 	}, nil
 }
 
-func (c *Client) WatchSwapEvent(poolAddress string, ctx context.Context) error {
-	poolFilterer, err := abi.NewPoolFilterer(common.HexToAddress(poolAddress), c.ethClient)
+func (c *Client) WatchSwapEvent(
+	pool Pool,
+	ctx context.Context,
+) error {
+	poolFilterer, err := abi.NewPoolFilterer(common.HexToAddress(pool.Address), c.ethClient)
 	if err != nil {
 		return err
 	}
@@ -57,8 +60,8 @@ func (c *Client) WatchSwapEvent(poolAddress string, ctx context.Context) error {
 		case err := <-subscription.Err():
 			return err
 		case event := <-eventSink:
-			swap := convertEventToSwap(event)
-			spotPrice := convertEventToSpotPrice(event)
+			swap := pool.convertEventToSwap(event)
+			spotPrice := pool.convertEventToSpotPrice(event)
 			c.logger.Info().Interface("swap", swap).Msg("swap event received")
 			c.indexer.AddSwap(swap)
 			c.indexer.AddPrice(spotPrice)
