@@ -51,13 +51,17 @@ func main() {
 		cancel()
 	}
 
+	// Initialize ethereum client
 	c, err := client.NewClient(cfg.NodeUrl, i, logger)
 	if err != nil {
 		logger.Error().Err(err).Msg("error creating ethereum client")
 		cancel()
 	}
+
+	// Watch for swap events and poll pool balances
 	c.WatchAndRestartPools(ctx, cfg.Pools)
 
+	// Start websocket server and block until error or context is cancelled
 	err = s.StartWebsocketAPI(ctx, logger, i)
 	if err != nil {
 		logger.Error().Err(err).Msg("websocket api error")

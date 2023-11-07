@@ -30,3 +30,15 @@ pools:
     base_decimal: 18
     quote_decimal: 18
     invert_price: false
+  - name: "Uniswap V3 wstETH / WETH Pool"
+    exchange_pair: "WSTETH/WETH"
+    address: "0xd340b57aacdd10f96fc1cf10e15921936f41e29c"
+    base_decimal: 18
+    quote_decimal: 18
+    invert_price: false
+  - name: "Uniswap V3 sfrxETH / WETH Pool"
+    exchange_pair: "SFRXETH/WETH"
+    address: "0x8a15b2dc9c4f295dcebb0e7887dd25980088fdcb"
+    base_decimal: 18
+    quote_decimal: 18
+    invert_price: false

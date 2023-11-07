@@ -79,7 +79,7 @@ func (c *Client) PollPoolBalance(
 					ExchangePair: pool.ExchangePair,
 					Price:        pool.SqrtPriceX96ToDec(slot0.SqrtPriceX96),
 				}
-				c.logger.Info().Interface("spotPrice", spotPrice).Msg("pool balance info received")
+				c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
 				c.indexer.AddPrice(spotPrice)
 			}
 		}
