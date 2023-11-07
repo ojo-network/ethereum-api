@@ -1,14 +1,27 @@
 ---
 node_url: "wss://ethereum.publicnode.com"
 pools:
-  - exchange_pair: "WETH/USDC"
+  - name: "Uniswap V3 USDC / WETH Pool"
+    exchange_pair: "WETH/USDC"
     address: "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
-    base_decimal: 18
-    quote_decimal: 6
-    invert_price: true
-
-  - exchange_pair: "WBTC/WETH"
-    address: "0x2f5e87c9312fa29aed5c179e456625d79015299c"
     base_decimal: 6
-    quote_decimal: 8
+    quote_decimal: 18
+    invert_price: true
+  - name: "Uniswap V3 WBTC / WETH Pool"
+    exchange_pair: "WBTC/WETH"
+    address: "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
+    base_decimal: 8
+    quote_decimal: 18
+    invert_price: false
+  - name: "Uniswap V3 cbETH / WETH Pool"
+    exchange_pair: "CBETH/WETH"
+    address: "0x840deeef2f115cf50da625f7368c24af6fe74410"
+    base_decimal: 18
+    quote_decimal: 18
+    invert_price: false
+  - name: "Uniswap V3 rETH / WETH Pool"
+    exchange_pair: "RETH/WETH"
+    address: "0xa4e0faa58465a2d369aa21b3e42d43374c6f9613"
+    base_decimal: 18
+    quote_decimal: 18
     invert_price: false

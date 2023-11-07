@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"math/big"
 	"os"
 
@@ -75,21 +74,17 @@ func (p *Pool) SqrtPriceX96ToDec(sqrtPriceX96 *big.Int) sdkmath.LegacyDec {
 	basePower := sdkmath.LegacyNewDec(10).Power(p.BaseDecimal)
 	quotePower := sdkmath.LegacyNewDec(10).Power(p.QuoteDecimal)
 	adjPower := quotePower.Quo(basePower)
-
-	adjPrice := price.Quo(adjPower)
+	price = price.Quo(adjPower)
 
 	// Divide 1 by the price if the desired price is inverted from the pool
 	if p.InvertPrice {
-		return sdkmath.LegacyNewDec(1).Quo(adjPrice)
+		return sdkmath.LegacyNewDec(1).Quo(price)
 	} else {
-		return adjPrice
+		return price
 	}
 }
 
 func (p *Pool) swapVolume(event *abi.PoolSwap) sdkmath.LegacyDec {
-	fmt.Println(p.ExchangePair)
-	fmt.Println(event.Amount0)
-	fmt.Println(event.Amount1)
 	if p.InvertPrice {
 		volume := sdkmath.LegacyNewDecFromBigInt(event.Amount1).Abs()
 		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))

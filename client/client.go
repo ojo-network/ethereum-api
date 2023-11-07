@@ -69,8 +69,13 @@ func (c *Client) PollPoolBalance(
 					c.logger.Error().Err(err).Msgf("error getting %s pool balance", pool.ExchangePair)
 					continue
 				}
+				blockNum, err := c.ethClient.BlockNumber(ctx)
+				if err != nil {
+					c.logger.Error().Err(err).Msgf("error getting %s pool balance", pool.ExchangePair)
+					continue
+				}
 				spotPrice := indexer.SpotPrice{
-					BlockNum:     indexer.BlockNum(1),
+					BlockNum:     indexer.BlockNum(blockNum),
 					Timestamp:    utils.CurrentUnixTime(),
 					ExchangePair: pool.ExchangePair,
 					Price:        pool.SqrtPriceX96ToDec(slot0.SqrtPriceX96),
