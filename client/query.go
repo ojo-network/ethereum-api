@@ -13,18 +13,18 @@ import (
 func (c *Client) QuerySpotPrice(ctx context.Context, pool Pool) indexer.SpotPrice {
 	poolCaller, err := abi.NewPoolCaller(common.HexToAddress(pool.Address), c.ethClient)
 	if err != nil {
-		c.logger.Error().Err(err).Msgf("error initializing %s pool caller", pool.ExchangePair)
+		c.logger.Error().Err(err).Msgf("error initializing %s pool caller", pool.ExchangePair())
 		return indexer.SpotPrice{}
 	}
 	slot0, err := poolCaller.Slot0(nil)
 	if err != nil {
-		c.logger.Error().Err(err).Msgf("error getting %s pool balance", pool.ExchangePair)
+		c.logger.Error().Err(err).Msgf("error getting %s pool balance", pool.ExchangePair())
 		return indexer.SpotPrice{}
 	}
 	return indexer.SpotPrice{
 		BlockNum:     c.QueryBlockNumber(ctx),
 		Timestamp:    utils.CurrentUnixTime(),
-		ExchangePair: pool.ExchangePair,
+		ExchangePair: pool.ExchangePair(),
 		Price:        pool.SqrtPriceX96ToDec(slot0.SqrtPriceX96),
 	}
 }

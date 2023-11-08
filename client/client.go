@@ -72,7 +72,7 @@ func (c *Client) WatchAndRestart(ctx context.Context, pool Pool) {
 			default:
 				err := c.WatchSwapEvent(ctx, pool)
 				if err != nil {
-					c.logger.Error().Err(err).Msgf("error watching %s swap events", pool.ExchangePair)
+					c.logger.Error().Err(err).Msgf("error watching %s swap events", pool.ExchangePair())
 				}
 			}
 		}
@@ -88,7 +88,7 @@ func (c *Client) WatchSwapEvent(ctx context.Context, pool Pool) error {
 
 	eventSink := make(chan *abi.PoolSwap)
 	opts := &bind.WatchOpts{Start: nil, Context: ctx}
-	c.logger.Info().Msgf("subscribing to %s swap events", pool.ExchangePair)
+	c.logger.Info().Msgf("subscribing to %s swap events", pool.ExchangePair())
 	subscription, err := poolFilterer.WatchSwap(opts, eventSink, nil, nil)
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (c *Client) WatchSwapEvent(ctx context.Context, pool Pool) error {
 	for {
 		select {
 		case <-ctx.Done():
-			c.logger.Info().Msgf("unsubscribing from %s swap events", pool.ExchangePair)
+			c.logger.Info().Msgf("unsubscribing from %s swap events", pool.ExchangePair())
 			subscription.Unsubscribe()
 			return nil
 		case err := <-subscription.Err():

@@ -28,3 +28,14 @@ func ParseConfig(filePath string) (*Config, error) {
 	}
 	return &config, nil
 }
+
+func (c *Config) AssetPairs() []server.AssetPair {
+	var assetPairs []server.AssetPair
+	for _, pool := range c.Pools {
+		assetPairs = append(assetPairs, server.AssetPair{
+			Base:  pool.Base,
+			Quote: pool.Quote,
+		})
+	}
+	return assetPairs
+}

@@ -12,17 +12,22 @@ import (
 
 type Pool struct {
 	Address      string `yaml:"address"`
-	ExchangePair string `yaml:"exchange_pair"`
+	Base         string `yaml:"base"`
+	Quote        string `yaml:"quote"`
 	BaseDecimal  uint64 `yaml:"base_decimal"`
 	QuoteDecimal uint64 `yaml:"quote_decimal"`
 	InvertPrice  bool   `yaml:"invert_price"`
+}
+
+func (p *Pool) ExchangePair() string {
+	return p.Base + "/" + p.Quote
 }
 
 func (p *Pool) ConvertEventToSpotPrice(event *abi.PoolSwap) indexer.SpotPrice {
 	return indexer.SpotPrice{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
-		ExchangePair: p.ExchangePair,
+		ExchangePair: p.ExchangePair(),
 		Price:        p.SqrtPriceX96ToDec(event.SqrtPriceX96),
 	}
 }
@@ -31,7 +36,7 @@ func (p *Pool) ConvertEventToSwap(event *abi.PoolSwap) indexer.Swap {
 	return indexer.Swap{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
-		ExchangePair: p.ExchangePair,
+		ExchangePair: p.ExchangePair(),
 		Price:        p.SqrtPriceX96ToDec(event.SqrtPriceX96),
 		Volume:       p.swapVolume(event),
 	}

@@ -6,39 +6,39 @@ server:
   read_timeout: "20s"
   broadcast_interval: "5s"
 pools:
-  - name: "Uniswap V3 USDC / WETH Pool"
-    exchange_pair: "WETH/USDC"
-    address: "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+  - address: "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+    base: "WETH"
+    quote: "USDC"
     base_decimal: 6
     quote_decimal: 18
     invert_price: true
-  - name: "Uniswap V3 WBTC / WETH Pool"
-    exchange_pair: "WBTC/WETH"
-    address: "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
+  - address: "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
+    base: "WBTC"
+    quote: "WETH"
     base_decimal: 8
     quote_decimal: 18
     invert_price: false
-  - name: "Uniswap V3 cbETH / WETH Pool"
-    exchange_pair: "CBETH/WETH"
-    address: "0x840deeef2f115cf50da625f7368c24af6fe74410"
+  - address: "0x840deeef2f115cf50da625f7368c24af6fe74410"
+    base: "CBETH"
+    quote: "WETH"
     base_decimal: 18
     quote_decimal: 18
     invert_price: false
-  - name: "Uniswap V3 rETH / WETH Pool"
-    exchange_pair: "RETH/WETH"
-    address: "0xa4e0faa58465a2d369aa21b3e42d43374c6f9613"
+  - address: "0xa4e0faa58465a2d369aa21b3e42d43374c6f9613"
+    base: "RETH"
+    quote: "WETH"
     base_decimal: 18
     quote_decimal: 18
     invert_price: false
-  - name: "Uniswap V3 wstETH / WETH Pool"
-    exchange_pair: "WSTETH/WETH"
-    address: "0xd340b57aacdd10f96fc1cf10e15921936f41e29c"
+  - address: "0xd340b57aacdd10f96fc1cf10e15921936f41e29c"
+    base: "WSTETH"
+    quote: "WETH"
     base_decimal: 18
     quote_decimal: 18
     invert_price: false
-  - name: "Uniswap V3 sfrxETH / WETH Pool"
-    exchange_pair: "SFRXETH/WETH"
-    address: "0x8a15b2dc9c4f295dcebb0e7887dd25980088fdcb"
+  - address: "0x8a15b2dc9c4f295dcebb0e7887dd25980088fdcb"
+    base: "SFRXETH"
+    quote: "WETH"
     base_decimal: 18
     quote_decimal: 18
     invert_price: false
