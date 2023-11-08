@@ -14,10 +14,10 @@ type Config struct {
 	Pools   []client.Pool       `yaml:"pools"`
 }
 
-func ParseConfig() (*Config, error) {
+func ParseConfig(filePath string) (*Config, error) {
 	config := Config{}
 
-	yamlFile, err := os.ReadFile("config.yaml")
+	yamlFile, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}

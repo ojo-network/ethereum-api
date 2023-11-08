@@ -36,7 +36,7 @@ func main() {
 		cancel()
 	}()
 
-	cfg, err := config.ParseConfig()
+	cfg, err := config.ParseConfig("config.yaml")
 	if err != nil {
 		logger.Fatal().Err(err).Msg("error parsing config")
 	}
