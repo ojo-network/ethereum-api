@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ojo-network/ethereum-api/abi"
 	"github.com/ojo-network/indexer/indexer"
-	"github.com/ojo-network/indexer/utils"
 	"github.com/rs/zerolog"
 )
 
@@ -37,20 +36,17 @@ func NewClient(
 	}, nil
 }
 
-func (c *Client) WatchAndRestartPools(
-	ctx context.Context,
-	pools []Pool,
-) {
+// WatchSwapsAndPollPrices starts the necessary go routines to watches for swap events,
+// polls for spot prices, and submit those prices to the indexer
+func (c *Client) WatchSwapsAndPollPrices(ctx context.Context, pools []Pool) {
 	for _, pool := range pools {
 		c.WatchAndRestart(ctx, pool)
-		c.PollPoolBalance(ctx, pool)
+		c.PollSpotPrice(ctx, pool)
 	}
 }
 
-func (c *Client) PollPoolBalance(
-	ctx context.Context,
-	pool Pool,
-) {
+// PollSpotPrice polls for the spot price of a pool
+func (c *Client) PollSpotPrice(ctx context.Context, pool Pool) {
 	go func() {
 		for {
 			select {
@@ -58,27 +54,7 @@ func (c *Client) PollPoolBalance(
 				return
 			default:
 				time.Sleep(5 * time.Second)
-				poolCaller, err := abi.NewPoolCaller(common.HexToAddress(pool.Address), c.ethClient)
-				if err != nil {
-					c.logger.Error().Err(err).Msgf("error getting %s pool balance", pool.ExchangePair)
-					break
-				}
-				slot0, err := poolCaller.Slot0(nil)
-				if err != nil {
-					c.logger.Error().Err(err).Msgf("error getting %s pool balance", pool.ExchangePair)
-					break
-				}
-				blockNum, err := c.ethClient.BlockNumber(ctx)
-				if err != nil {
-					c.logger.Error().Err(err).Msgf("error getting %s pool balance", pool.ExchangePair)
-					break
-				}
-				spotPrice := indexer.SpotPrice{
-					BlockNum:     indexer.BlockNum(blockNum),
-					Timestamp:    utils.CurrentUnixTime(),
-					ExchangePair: pool.ExchangePair,
-					Price:        pool.SqrtPriceX96ToDec(slot0.SqrtPriceX96),
-				}
+				spotPrice := c.QuerySpotPrice(ctx, pool)
 				c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
 				c.indexer.AddPrice(spotPrice)
 			}
@@ -86,10 +62,8 @@ func (c *Client) PollPoolBalance(
 	}()
 }
 
-func (c *Client) WatchAndRestart(
-	ctx context.Context,
-	pool Pool,
-) {
+// WatchAndRestart watches for swap events and restarts the watcher if it errors
+func (c *Client) WatchAndRestart(ctx context.Context, pool Pool) {
 	go func() {
 		for {
 			select {
@@ -105,10 +79,8 @@ func (c *Client) WatchAndRestart(
 	}()
 }
 
-func (c *Client) WatchSwapEvent(
-	ctx context.Context,
-	pool Pool,
-) error {
+// WatchSwapEvent watches for swap events on a pool
+func (c *Client) WatchSwapEvent(ctx context.Context, pool Pool) error {
 	poolFilterer, err := abi.NewPoolFilterer(common.HexToAddress(pool.Address), c.ethClient)
 	if err != nil {
 		return err

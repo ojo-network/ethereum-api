@@ -59,7 +59,7 @@ func main() {
 	}
 
 	// Watch for swap events and poll pool balances
-	c.WatchAndRestartPools(ctx, cfg.Pools)
+	c.WatchSwapsAndPollPrices(ctx, cfg.Pools)
 
 	// Start websocket server and block until error or context is cancelled
 	err = s.StartWebsocketAPI(ctx, logger, i)
