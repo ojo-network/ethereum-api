@@ -42,3 +42,9 @@ pools:
     base_decimal: 18
     quote_decimal: 18
     invert_price: false
+  - address: "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8"
+    base: "LINK"
+    quote: "WETH"
+    base_decimal: 18
+    quote_decimal: 18
+    invert_price: false
