@@ -1,6 +1,7 @@
 package config
 
 import (
+	"math/rand"
 	"os"
 
 	"github.com/ojo-network/ethereum-api/client"
@@ -9,9 +10,9 @@ import (
 )
 
 type Config struct {
-	NodeUrl string              `yaml:"node_url"`
-	Server  server.ServerConfig `yaml:"server"`
-	Pools   []client.Pool       `yaml:"pools"`
+	NodeUrls []string            `yaml:"node_urls"`
+	Server   server.ServerConfig `yaml:"server"`
+	Pools    []client.Pool       `yaml:"pools"`
 }
 
 func ParseConfig(filePath string) (*Config, error) {
@@ -38,4 +39,9 @@ func (c *Config) AssetPairs() []server.AssetPair {
 		})
 	}
 	return assetPairs
+}
+
+func (c *Config) RandomNodeUrl() string {
+	index := rand.Intn(len(c.NodeUrls))
+	return c.NodeUrls[index]
 }

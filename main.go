@@ -52,9 +52,9 @@ func main() {
 	}
 
 	// Initialize ethereum client
-	c, err := client.NewClient(cfg.NodeUrl, i, logger)
+	c, err := client.Connect(cfg.NodeUrls, i, logger)
 	if err != nil {
-		logger.Error().Err(err).Msg("error creating ethereum client")
+		logger.Error().Err(err).Send()
 		cancel()
 	}
 

@@ -16,13 +16,18 @@ func TestParseConfig(t *testing.T) {
 
 	_, err = tmpfile.Write([]byte(`
 ---
-node_url: "http://localhost:8545"
+node_urls: [
+	http://node1.com,
+	http://node2.com
+]
 server:
   listen_addr: "http://localhost:8080"
 pools:
-  - exchange_pair: "WBTC/WETH"
+  - base: "WBTC"
+    quote: "WETH"
     address: "testAddress1"
-  - exchange_pair: "WETH/USDC"
+  - base: "WETH"
+    quote: "USDC"
     address: "testAddress2"
 `))
 	if err != nil {
@@ -39,11 +44,13 @@ pools:
 	}
 
 	// Assert that the parsed config matches the expected values
-	assert.Equal(t, "http://localhost:8545", config.NodeUrl)
+	assert.Equal(t, "http://node1.com", config.NodeUrls[0])
+	assert.Equal(t, "http://node2.com", config.NodeUrls[1])
+
 	assert.Equal(t, "http://localhost:8080", config.Server.ListenAddr)
 	assert.Equal(t, 2, len(config.Pools))
-	assert.Equal(t, "WBTC/WETH", config.Pools[0].ExchangePair)
+	assert.Equal(t, "WBTC/WETH", config.Pools[0].ExchangePair())
 	assert.Equal(t, "testAddress1", config.Pools[0].Address)
-	assert.Equal(t, "WETH/USDC", config.Pools[1].ExchangePair)
+	assert.Equal(t, "WETH/USDC", config.Pools[1].ExchangePair())
 	assert.Equal(t, "testAddress2", config.Pools[1].Address)
 }

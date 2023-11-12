@@ -1,5 +1,8 @@
 ---
-node_url: "wss://ethereum.publicnode.com"
+node_urls: [
+  "wss://ethereum.publicnode.com",
+  "wss://ethereum-mainnet.core.chainstack.com/ws/5f899c2bcc20c7d53a77f049887752ca"
+]
 server:
   listen_addr: "0.0.0.0:5005"
   write_timeout: "20s"
@@ -44,6 +47,12 @@ pools:
     invert_price: false
   - address: "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8"
     base: "LINK"
+    quote: "WETH"
+    base_decimal: 18
+    quote_decimal: 18
+    invert_price: false
+  - address: "0x63818bbdd21e69be108a23ac1e84cbf66399bd7d"
+    base: "STETH"
     quote: "WETH"
     base_decimal: 18
     quote_decimal: 18

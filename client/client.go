@@ -24,6 +24,7 @@ func NewClient(
 	indexer *indexer.Indexer,
 	logger zerolog.Logger,
 ) (*Client, error) {
+	logger.Info().Msgf("connecting to ethereum node %s", nodeUrl)
 	ethClient, err := ethclient.Dial(nodeUrl)
 	if err != nil {
 		return nil, err
