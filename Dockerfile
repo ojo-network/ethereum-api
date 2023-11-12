@@ -1,14 +1,27 @@
-# Use the official Go 1.20 image as the base image
-FROM golang:1.20
+# Build Image
+FROM golang:1.20-alpine AS builder
 
-# Set the working directory to /app
+RUN apk add --no-cache build-base git
+
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+COPY go.mod go.sum ./
+COPY .netrc /root/.netrc
 
-# Build the main.go program
-RUN go build -o main .
+ENV export GOPRIVATE=github.com/ojo-network/indexer
 
-# Run the main.go program
-CMD ["./main"]
+RUN go mod download
+COPY . .
+RUN go build
+
+## Final Image
+FROM alpine
+
+ENV HOME /app
+WORKDIR $HOME
+COPY --from=builder /app/ethereum-api /bin/ethereum-api
+COPY --from=builder /app/sample-config.yaml /app/config.yaml
+
+EXPOSE 5005
+
+ENTRYPOINT [ "ethereum-api" ]
