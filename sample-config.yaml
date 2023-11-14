@@ -1,7 +1,7 @@
 ---
 node_urls: [
-  "wss://ethereum.publicnode.com",
-  "wss://ethereum-mainnet.core.chainstack.com/ws/5f899c2bcc20c7d53a77f049887752ca"
+  "wss://ethereum-mainnet.core.chainstack.com/ws/5f899c2bcc20c7d53a77f049887752ca",
+  "wss://ethereum.publicnode.com"
 ]
 server:
   listen_addr: "0.0.0.0:5005"

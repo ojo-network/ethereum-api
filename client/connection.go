@@ -1,24 +1,44 @@
 package client
 
 import (
-	"fmt"
+	"context"
+	"time"
 
+	"github.com/ojo-network/ethereum-api/config"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/rs/zerolog"
 )
 
-func Connect(
-	nodeUrls []string,
+const sleepDurationAfterAllNodesFail = 2 * time.Minute
+
+// MaintainConnection maintains a connection to an ethereum node, using the nodeUrls
+// in the order provided, until a connection is established. Continues this process
+// after receiving an error from the client until the context is cancelled.
+func MaintainConnection(
+	cfg *config.Config,
 	indexer *indexer.Indexer,
+	ctx context.Context,
 	logger zerolog.Logger,
-) (*Client, error) {
-	for _, nodeUrl := range nodeUrls {
-		ethClient, err := NewClient(nodeUrl, indexer, logger)
-		if err != nil {
-			logger.Error().Err(err).Msgf("error connecting to ethereum node %s", nodeUrl)
-			continue
+) {
+	go func() {
+		var nodeIndex int
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if nodeIndex > len(cfg.NodeUrls)-1 {
+					time.Sleep(sleepDurationAfterAllNodesFail)
+					nodeIndex = 0
+				}
+				ethClient, err := NewClient(cfg.NodeUrls[nodeIndex], indexer, ctx, logger)
+				if err != nil {
+					logger.Error().Err(err).Msgf("error connecting to ethereum node %s", cfg.NodeUrls[nodeIndex])
+				} else {
+					ethClient.WatchSwapsAndPollPrices(cfg.Pools)
+				}
+				nodeIndex++
+			}
 		}
-		return ethClient, nil
-	}
-	return nil, fmt.Errorf("error connecting to all ethereum nodes")
+	}()
 }

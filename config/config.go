@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"os"
 
-	"github.com/ojo-network/ethereum-api/client"
+	"github.com/ojo-network/ethereum-api/pool"
 	"github.com/ojo-network/indexer/server"
 	"gopkg.in/yaml.v3"
 )
@@ -12,7 +12,7 @@ import (
 type Config struct {
 	NodeUrls []string            `yaml:"node_urls"`
 	Server   server.ServerConfig `yaml:"server"`
-	Pools    []client.Pool       `yaml:"pools"`
+	Pools    []pool.Pool         `yaml:"pools"`
 }
 
 func ParseConfig(filePath string) (*Config, error) {

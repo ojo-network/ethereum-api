@@ -18,24 +18,19 @@ func init() {
 }
 
 func main() {
-
-	// Listen for user interrupt
-	userInterrupt := make(chan os.Signal, 1)
-	signal.Notify(userInterrupt, os.Interrupt, syscall.SIGTERM)
-
-	// Create logger
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
-
-	// Create context
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Cancel the context on user interrupt
+	userInterrupt := make(chan os.Signal, 1)
+	signal.Notify(userInterrupt, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-userInterrupt
 		logger.Info().Msg("user interrupt")
 		cancel()
 	}()
 
+	// Parse the config
 	cfg, err := config.ParseConfig("config.yaml")
 	if err != nil {
 		logger.Fatal().Err(err).Msg("error parsing config")
@@ -44,22 +39,15 @@ func main() {
 	// Initialize indexer
 	i := indexer.NewIndexer(logger, ctx)
 
-	// Start websocket server and broadcast prices
+	// Start and maintain connection to ethereum node
+	client.MaintainConnection(cfg, i, ctx, logger)
+
+	// Create new websocket and REST server
 	s, err := server.NewServer(logger, cfg.Server, cfg.AssetPairs())
 	if err != nil {
 		logger.Error().Err(err).Msg("error creating server")
 		cancel()
 	}
-
-	// Initialize ethereum client
-	c, err := client.Connect(cfg.NodeUrls, i, logger)
-	if err != nil {
-		logger.Error().Err(err).Send()
-		cancel()
-	}
-
-	// Watch for swap events and poll pool balances
-	c.WatchSwapsAndPollPrices(ctx, cfg.Pools)
 
 	// Start websocket server and block until error or context is cancelled
 	err = s.StartWebsocketAPI(ctx, logger, i)
