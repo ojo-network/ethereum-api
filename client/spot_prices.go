@@ -1,7 +1,6 @@
 package client
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -11,8 +10,26 @@ import (
 	"github.com/ojo-network/indexer/utils"
 )
 
+// PollSpotPrices polls for the spot price of a pool
+func (c *Client) PollSpotPrices(pools []pool.Pool) {
+	go func() {
+		for {
+			select {
+			case <-c.ctx.Done():
+				return
+			case blockNum := <-c.newBlock:
+				for _, p := range pools {
+					spotPrice := c.QuerySpotPrice(p, blockNum)
+					c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
+					c.indexer.AddPrice(spotPrice)
+				}
+			}
+		}
+	}()
+}
+
 // QuerySpotPrice queries the spot price of a pool
-func (c *Client) QuerySpotPrice(p pool.Pool) indexer.SpotPrice {
+func (c *Client) QuerySpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
 	poolCaller, err := abi.NewPoolCaller(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
@@ -24,19 +41,9 @@ func (c *Client) QuerySpotPrice(p pool.Pool) indexer.SpotPrice {
 		return indexer.SpotPrice{}
 	}
 	return indexer.SpotPrice{
-		BlockNum:     c.QueryBlockNumber(c.ctx),
+		BlockNum:     indexer.BlockNum(blockNum),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
 		Price:        p.SqrtPriceX96ToDec(slot0.SqrtPriceX96),
 	}
-}
-
-// QueryBlockNumber queries the current ethereum block number
-func (c *Client) QueryBlockNumber(ctx context.Context) indexer.BlockNum {
-	blockNum, err := c.ethClient.BlockNumber(ctx)
-	if err != nil {
-		c.reportError(fmt.Errorf("error retrieving ethereum block number: %w", err))
-		return 0
-	}
-	return indexer.BlockNum(blockNum)
 }
