@@ -10,7 +10,7 @@ import (
 )
 
 // WatchAndRestart watches for swap events and restarts the watcher if it errors
-func (c *Client) WatchAndRestart(p pool.Pool) {
+func (c *Client) WatchSwapsAndRestart(p pool.Pool) {
 	go func() {
 		for {
 			select {

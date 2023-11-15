@@ -11,8 +11,8 @@ import (
 
 const sleepDurationAfterAllNodesFail = 2 * time.Minute
 
-// MaintainConnection maintains a connection to an ethereum node, using the nodeUrls
-// in the order provided, until a connection is established. Continues this process
+// MaintainConnection maintains a connection to an ethereum node using the nodeUrls
+// in the order provided until a connection is established. It continues this process
 // after receiving an error from the client until the context is cancelled.
 func MaintainConnection(
 	cfg *config.Config,

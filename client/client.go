@@ -64,11 +64,13 @@ func (c *Client) WatchSwapsAndPollPrices(pools []pool.Pool) {
 	c.PollSpotPrices(pools)
 
 	for _, pool := range pools {
-		c.WatchAndRestart(pool)
+		c.WatchSwapsAndRestart(pool)
 	}
 	<-c.ctx.Done()
 }
 
+// reportError is called anytime there is an error with the ethereum client. If there are
+// more than maxErrorsPerMinute errors in a one minute period, the client context is cancelled.
 func (c *Client) reportError(err error) {
 	c.logger.Error().Err(err).Msg("ethereum client error")
 	if time.Now().Unix() > c.resetErrorsAt {

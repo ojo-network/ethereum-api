@@ -34,7 +34,6 @@ func (c *Client) WatchForNewBlocks() error {
 		case err := <-subscription.Err():
 			return err
 		case header := <-headers:
-			fmt.Println(header.Number.Uint64())
 			c.newBlock <- header.Number.Uint64()
 		}
 	}
