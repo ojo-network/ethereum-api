@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      GOPRIVATE: github.com/fabianMendez/privatemodule
+      GOPRIVATE: github.com/ojo-network/indexer
       GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
     strategy:
       matrix:
