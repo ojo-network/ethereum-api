@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/fabianMendez/privatemodule
+      GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -23,10 +26,7 @@ jobs:
         env:
           GOOS: ${{ matrix.targetos }}
           GOARCH: ${{ matrix.arch }}
-          GOPRIVATE: github.com/ojo-network/indexer
-          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
-      - name: Set up git config for the private repo
-        run: git config --global url."https://${GH_ACCESS_TOKEN}:x-oauth-basic@github.com/".insteadOf https://github.com/
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
       - name: Compile
         run: |
           go mod download
