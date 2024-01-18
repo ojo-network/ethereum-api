@@ -19,10 +19,12 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.19
+          go-version: 1.20
         env:
           GOOS: ${{ matrix.targetos }}
           GOARCH: ${{ matrix.arch }}
+      - name: Authenticate with GitHub
+        run: echo "//github.com/:machine-token:${{ secrets.GITHUB_TOKEN }}" > ~/.netrc
       - name: Compile
         run: |
           go mod download
