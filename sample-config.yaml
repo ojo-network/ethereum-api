@@ -39,7 +39,7 @@ pools:
     base_decimal: 18
     quote_decimal: 18
     invert_price: false
-  - address: "0x8a15b2dc9c4f295dcebb0e7887dd25980088fdcb"
+  - address: "0xeed4603bc333ef406e5eb691ba66798d5c857d8b"
     base: "SFRXETH"
     quote: "WETH"
     base_decimal: 18
