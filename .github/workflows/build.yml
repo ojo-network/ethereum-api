@@ -23,8 +23,8 @@ jobs:
         env:
           GOOS: ${{ matrix.targetos }}
           GOARCH: ${{ matrix.arch }}
-      - name: Authenticate with GitHub
-        run: echo "//github.com/:machine-token:${{ secrets.GITHUB_TOKEN }}" > ~/.netrc
+      - name: Set GOPRIVATE for private repositories
+        run: echo "export GOPRIVATE=github.com/ojo-network" >> $GITHUB_ENV
       - name: Compile
         run: |
           go mod download
