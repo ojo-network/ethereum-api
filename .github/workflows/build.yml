@@ -23,8 +23,16 @@ jobs:
         env:
           GOOS: ${{ matrix.targetos }}
           GOARCH: ${{ matrix.arch }}
+
+      - name: Configure Git for GitHub Actions
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
       - name: Set GOPRIVATE for private repositories
         run: echo "export GOPRIVATE=github.com/ojo-network" >> $GITHUB_ENV
+      - name: Authenticate with GitHub Package Registry
+        run: echo "//${{ github.token }}:x-oauth-basic@npm.pkg.github.com/:_authToken=${{ github.token }}" > ~/.npmrc
+
       - name: Compile
         run: |
           go mod download
