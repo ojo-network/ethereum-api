@@ -17,6 +17,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/ojo-network/indexer
+      GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: technote-space/get-diff-action@v6.1.2
@@ -30,6 +33,7 @@ jobs:
         with:
           go-version: '1.20'
           cache: true
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
       - name: Test
         if: env.GIT_DIFF
         run: |
