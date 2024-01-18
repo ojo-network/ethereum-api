@@ -1,13 +1,14 @@
 # Build Image
 FROM golang:1.20-alpine AS builder
 
+ARG GH_ACCESS_TOKEN
+
 RUN apk add --no-cache build-base git
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
-COPY .netrc /root/.netrc
-
+RUN git config --global url."https://${GH_ACCESS_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 ENV export GOPRIVATE=github.com/ojo-network/indexer
 
 RUN go mod download
