@@ -30,9 +30,8 @@ jobs:
       - name: Compile
         run: |
           go mod download
-          cd cmd
           go build .
       - uses: actions/upload-artifact@v3
         with:
           name: ethereum-api ${{ matrix.targetos }} ${{ matrix.arch }}
-          path: cmd/ethereum-api
+          path: ethereum-api
