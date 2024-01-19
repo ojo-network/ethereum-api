@@ -1,0 +1,58 @@
+# This workflow helps with creating releases.
+# This job will only be triggered when a tag (vX.X.x) is pushed
+name: Release Docker
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - "v[0-9]+\\.[0-9]+\\.[0-9]+" # Official release version tags e.g. v2.0.5
+      - "v[0-9]+\\.[0-9]+\\.[0-9]+-rc[0-9]+" # Release candidate tags e.g. v1.0.3-rc4
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: 'google-github-actions/auth@v1.1.1'
+        with:
+          workload_identity_provider: '${{ secrets.OJO_GCR_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.OJO_GCR_SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
+          access_token_lifetime: '300s'
+
+      - name: Login to Artifact Registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: us-west4-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            us-west4-docker.pkg.dev/ojo-network/ethereum-api/ethereum-api
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: GH_ACCESS_TOKEN=${{secrets.GH_ACCESS_TOKEN}}
