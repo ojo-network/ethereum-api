@@ -28,7 +28,7 @@ func (p *Pool) ConvertEventToSpotPrice(event *abi.PoolSwap) indexer.SpotPrice {
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
-		Price:        p.SqrtPriceX96ToDec(event.SqrtPriceX96),
+		Price:        p.SqrtPriceX96ToDec(event.Price),
 	}
 }
 
@@ -37,7 +37,7 @@ func (p *Pool) ConvertEventToSwap(event *abi.PoolSwap) indexer.Swap {
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
-		Price:        p.SqrtPriceX96ToDec(event.SqrtPriceX96),
+		Price:        p.SqrtPriceX96ToDec(event.Price),
 		Volume:       p.swapVolume(event),
 	}
 }

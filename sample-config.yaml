@@ -1,7 +1,6 @@
 ---
 node_urls: [
-  "wss://ethereum-mainnet.core.chainstack.com/ws/5f899c2bcc20c7d53a77f049887752ca",
-  "wss://ethereum.publicnode.com"
+  "ABBITRUM WEBSOCKET URL HERE",
 ]
 server:
   listen_addr: "0.0.0.0:5005"
@@ -9,51 +8,9 @@ server:
   read_timeout: "20s"
   broadcast_interval: "5s"
 pools:
-  - address: "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
-    base: "WETH"
-    quote: "USDC"
+  - address: "0x8Bf9C3975172c57E37b3D1c1348e9b5280FB3BaA"
+    base: "MILKTIA"
+    quote: "TIA"
     base_decimal: 6
-    quote_decimal: 18
-    invert_price: true
-  - address: "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
-    base: "WBTC"
-    quote: "WETH"
-    base_decimal: 8
-    quote_decimal: 18
-    invert_price: false
-  - address: "0x840deeef2f115cf50da625f7368c24af6fe74410"
-    base: "CBETH"
-    quote: "WETH"
-    base_decimal: 18
-    quote_decimal: 18
-    invert_price: false
-  - address: "0xa4e0faa58465a2d369aa21b3e42d43374c6f9613"
-    base: "RETH"
-    quote: "WETH"
-    base_decimal: 18
-    quote_decimal: 18
-    invert_price: false
-  - address: "0xd340b57aacdd10f96fc1cf10e15921936f41e29c"
-    base: "WSTETH"
-    quote: "WETH"
-    base_decimal: 18
-    quote_decimal: 18
-    invert_price: false
-  - address: "0xeed4603bc333ef406e5eb691ba66798d5c857d8b"
-    base: "SFRXETH"
-    quote: "WETH"
-    base_decimal: 18
-    quote_decimal: 18
-    invert_price: false
-  - address: "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8"
-    base: "LINK"
-    quote: "WETH"
-    base_decimal: 18
-    quote_decimal: 18
-    invert_price: false
-  - address: "0x63818bbdd21e69be108a23ac1e84cbf66399bd7d"
-    base: "STETH"
-    quote: "WETH"
-    base_decimal: 18
-    quote_decimal: 18
+    quote_decimal: 6
     invert_price: false

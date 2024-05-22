@@ -35,7 +35,7 @@ func (c *Client) QuerySpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice 
 		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
 		return indexer.SpotPrice{}
 	}
-	slot0, err := poolCaller.Slot0(nil)
+	globalState, err := poolCaller.GlobalState(nil)
 	if err != nil {
 		c.reportError(fmt.Errorf("error getting %s pool balance: %w", p.ExchangePair(), err))
 		return indexer.SpotPrice{}
@@ -44,6 +44,6 @@ func (c *Client) QuerySpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice 
 		BlockNum:     indexer.BlockNum(blockNum),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
-		Price:        p.SqrtPriceX96ToDec(slot0.SqrtPriceX96),
+		Price:        p.SqrtPriceX96ToDec(globalState.Price),
 	}
 }
