@@ -39,8 +39,11 @@ func main() {
 	// Initialize indexer
 	i := indexer.NewIndexer(logger, ctx)
 
-	// Start and maintain connection to ethereum node
-	client.MaintainConnection(cfg, i, ctx, logger)
+	// Start and maintain connection to blockchain nodes for each exchange we index
+	for _, exchange := range cfg.Exchanges {
+		client.MaintainConnection(exchange, i, ctx, logger)
+	}
+
 
 	// Create new websocket and REST server
 	s, err := server.NewServer(logger, cfg.Server, cfg.AssetPairs())

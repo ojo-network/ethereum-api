@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ojo-network/ethereum-api/config"
+	"github.com/ojo-network/ethereum-api/pool"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/rs/zerolog"
 )
@@ -15,7 +16,7 @@ const sleepDurationAfterAllNodesFail = 2 * time.Minute
 // in the order provided until a connection is established. It continues this process
 // after receiving an error from the client until the context is cancelled.
 func MaintainConnection(
-	cfg *config.Config,
+	exchange config.Exchange,
 	indexer *indexer.Indexer,
 	ctx context.Context,
 	logger zerolog.Logger,
@@ -27,15 +28,21 @@ func MaintainConnection(
 			case <-ctx.Done():
 				return
 			default:
-				if nodeIndex > len(cfg.NodeUrls)-1 {
+				if nodeIndex > len(exchange.NodeUrls)-1 {
 					time.Sleep(sleepDurationAfterAllNodesFail)
 					nodeIndex = 0
 				}
-				ethClient, err := NewClient(cfg.NodeUrls[nodeIndex], indexer, ctx, logger)
+				ethClient, err := NewClient(
+					exchange.NodeUrls[nodeIndex],
+					pool.SupportedExchanges[exchange.Name],
+					indexer,
+					ctx,
+					logger,
+				)
 				if err != nil {
-					logger.Error().Err(err).Msgf("error connecting to ethereum node %s", cfg.NodeUrls[nodeIndex])
+					logger.Error().Err(err).Msgf("error connecting to ethereum node %s", exchange.NodeUrls[nodeIndex])
 				} else {
-					ethClient.WatchSwapsAndPollPrices(cfg.Pools)
+					ethClient.WatchSwapsAndPollPrices(exchange.Pools)
 				}
 				nodeIndex++
 			}
