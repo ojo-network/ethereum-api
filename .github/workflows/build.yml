@@ -3,7 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - camelot
+      - main
 
 # This workflow makes amd64 and arm64 binaries for macOS and Linux.
 jobs:
