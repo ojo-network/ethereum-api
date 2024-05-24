@@ -55,7 +55,7 @@ exchanges:
         invert_price: false
   - name: "camelot"
     node_urls:
-      - "YOUR ARBITRUM WS URL HERE"
+      - "wss://arbitrum-one-rpc.publicnode.com"
     pools:
       - address: "0x8Bf9C3975172c57E37b3D1c1348e9b5280FB3BaA"
         base: "MILKTIA"
