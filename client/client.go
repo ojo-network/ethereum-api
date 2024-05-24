@@ -14,9 +14,10 @@ import (
 const maxErrorsPerMinute = 10
 
 type Client struct {
-	nodeUrl   string
-	ethClient *ethclient.Client
-	indexer   *indexer.Indexer
+	nodeUrl      string
+	poolContract pool.PoolContract
+	ethClient    *ethclient.Client
+	indexer      *indexer.Indexer
 
 	ctx        context.Context
 	cancelFunc context.CancelFunc
@@ -31,6 +32,7 @@ type Client struct {
 
 func NewClient(
 	nodeUrl string,
+	poolContract pool.PoolContract,
 	indexer *indexer.Indexer,
 	mainCtx context.Context,
 	logger zerolog.Logger,
@@ -46,6 +48,7 @@ func NewClient(
 
 	return &Client{
 		nodeUrl:       nodeUrl,
+		poolContract:  poolContract,
 		ethClient:     ethClient,
 		indexer:       indexer,
 		ctx:           ctx,

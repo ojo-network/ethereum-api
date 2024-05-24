@@ -11,12 +11,12 @@ import (
 )
 
 type Pool struct {
-	Address      string `yaml:"address"`
-	Base         string `yaml:"base"`
-	Quote        string `yaml:"quote"`
-	BaseDecimal  uint64 `yaml:"base_decimal"`
-	QuoteDecimal uint64 `yaml:"quote_decimal"`
-	InvertPrice  bool   `yaml:"invert_price"`
+	Address      string       `yaml:"address"`
+	Base         string       `yaml:"base"`
+	Quote        string       `yaml:"quote"`
+	BaseDecimal  uint64       `yaml:"base_decimal"`
+	QuoteDecimal uint64       `yaml:"quote_decimal"`
+	InvertPrice  bool         `yaml:"invert_price"`
 }
 
 func (p *Pool) ExchangePair() string {
@@ -39,6 +39,25 @@ func (p *Pool) ConvertEventToSwap(event *abi.PoolSwap) indexer.Swap {
 		ExchangePair: p.ExchangePair(),
 		Price:        p.SqrtPriceX96ToDec(event.SqrtPriceX96),
 		Volume:       p.swapVolume(event),
+	}
+}
+
+func (p *Pool) ConvertAlgebraEventToSpotPrice(event *abi.AlgebraPoolSwap) indexer.SpotPrice {
+	return indexer.SpotPrice{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        p.SqrtPriceX96ToDec(event.Price),
+	}
+}
+
+func (p *Pool) ConvertAlgebraEventToSwap(event *abi.AlgebraPoolSwap) indexer.Swap {
+	return indexer.Swap{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        p.SqrtPriceX96ToDec(event.Price),
+		Volume:       p.swapAlgebraVolume(event),
 	}
 }
 
@@ -68,6 +87,16 @@ func (p *Pool) SqrtPriceX96ToDec(sqrtPriceX96 *big.Int) sdkmath.LegacyDec {
 }
 
 func (p *Pool) swapVolume(event *abi.PoolSwap) sdkmath.LegacyDec {
+	if p.InvertPrice {
+		volume := sdkmath.LegacyNewDecFromBigInt(event.Amount1).Abs()
+		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))
+	} else {
+		volume := sdkmath.LegacyNewDecFromBigInt(event.Amount0).Abs()
+		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.BaseDecimal)))
+	}
+}
+
+func (p *Pool) swapAlgebraVolume(event *abi.AlgebraPoolSwap) sdkmath.LegacyDec {
 	if p.InvertPrice {
 		volume := sdkmath.LegacyNewDecFromBigInt(event.Amount1).Abs()
 		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))

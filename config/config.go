@@ -1,7 +1,7 @@
 package config
 
 import (
-	"math/rand"
+	"fmt"
 	"os"
 
 	"github.com/ojo-network/ethereum-api/pool"
@@ -9,10 +9,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type Exchange struct {
+	Name     pool.ExchangeName `yaml:"name"`
+	NodeUrls []string          `yaml:"node_urls"`
+	Pools    []pool.Pool       `yaml:"pools"`
+}
+
 type Config struct {
-	NodeUrls []string            `yaml:"node_urls"`
-	Server   server.ServerConfig `yaml:"server"`
-	Pools    []pool.Pool         `yaml:"pools"`
+	Exchanges []Exchange          `yaml:"exchanges"`
+	Server    server.ServerConfig `yaml:"server"`
 }
 
 func ParseConfig(filePath string) (*Config, error) {
@@ -27,21 +32,30 @@ func ParseConfig(filePath string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &config, nil
+	return &config, config.Validate()
+}
+
+// Validate returns an error if the Config object is invalid.
+func (c Config) Validate() (err error) {
+	for _, exchange := range c.Exchanges{
+		if _, ok := pool.SupportedExchanges[exchange.Name]; !ok {
+			return fmt.Errorf("unsupported exchange: %s", exchange.Name)
+		}
+	}
+
+	return nil
 }
 
 func (c *Config) AssetPairs() []server.AssetPair {
 	var assetPairs []server.AssetPair
-	for _, pool := range c.Pools {
-		assetPairs = append(assetPairs, server.AssetPair{
-			Base:  pool.Base,
-			Quote: pool.Quote,
-		})
+	for _, exchange := range c.Exchanges {
+		for _, pool := range exchange.Pools {
+			assetPairs = append(assetPairs, server.AssetPair{
+				Base:  pool.Base,
+				Quote: pool.Quote,
+			})
+		}
 	}
-	return assetPairs
-}
 
-func (c *Config) RandomNodeUrl() string {
-	index := rand.Intn(len(c.NodeUrls))
-	return c.NodeUrls[index]
+	return assetPairs
 }
