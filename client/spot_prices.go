@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ojo-network/ethereum-api/abi"
+	"github.com/ojo-network/ethereum-api/abi/camelot"
+	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/ethereum-api/pool"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/ojo-network/indexer/utils"
@@ -38,7 +39,7 @@ func (c *Client) PollSpotPrices(pools []pool.Pool) {
 
 // QueryUniswapSpotPrice queries the spot price of a uniswap pool
 func (c *Client) QueryUniswapSpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
-	poolCaller, err := abi.NewPoolCaller(common.HexToAddress(p.Address), c.ethClient)
+	poolCaller, err := uniswap.NewPoolCaller(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
 		return indexer.SpotPrice{}
@@ -58,7 +59,7 @@ func (c *Client) QueryUniswapSpotPrice(p pool.Pool, blockNum uint64) indexer.Spo
 
 // QueryAlgebraSpotPrice queries the spot price of an alegbra pool
 func (c *Client) QueryAlgebraSpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
-	poolCaller, err := abi.NewAlgebraPoolCaller(common.HexToAddress(p.Address), c.ethClient)
+	poolCaller, err := camelot.NewAlgebraPoolCaller(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
 		return indexer.SpotPrice{}

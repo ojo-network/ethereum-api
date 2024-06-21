@@ -37,7 +37,7 @@ func ParseConfig(filePath string) (*Config, error) {
 
 // Validate returns an error if the Config object is invalid.
 func (c Config) Validate() (err error) {
-	for _, exchange := range c.Exchanges{
+	for _, exchange := range c.Exchanges {
 		if _, ok := pool.SupportedExchanges[exchange.Name]; !ok {
 			return fmt.Errorf("unsupported exchange: %s", exchange.Name)
 		}

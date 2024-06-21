@@ -66,7 +66,6 @@ server:
 	assert.Equal(t, "http://localhost:8080", config.Server.ListenAddr)
 }
 
-
 func TestInvalidExchanges(t *testing.T) {
 	tmpfile, err := os.CreateTemp("", "config_test")
 	if err != nil {
