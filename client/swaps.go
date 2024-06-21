@@ -116,12 +116,11 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 		return err
 	}
 
-	callOpts := &bind.CallOpts{Context: c.ctx}
-	vaultAddress, err := poolCaller.GetVault(callOpts)
+	vaultAddress, err := poolCaller.GetVault(nil)
 	if err != nil {
 		return err
 	}
-	poolId, err := poolCaller.GetPoolId(callOpts)
+	poolId, err := poolCaller.GetPoolId(nil)
 	if err != nil {
 		return err
 	}
@@ -131,7 +130,7 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 	if err != nil {
 		return err
 	}
-	poolTokens, err := vaultCaller.GetPoolTokens(callOpts, poolId)
+	poolTokens, err := vaultCaller.GetPoolTokens(nil, poolId)
 	if err != nil {
 		return err
 	}
@@ -150,9 +149,9 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 	}
 
 	eventSink := make(chan *vault.PoolSwap)
-	watchOpts := &bind.WatchOpts{Start: nil, Context: c.ctx}
+	opts := &bind.WatchOpts{Start: nil, Context: c.ctx}
 	c.logger.Info().Msgf("subscribing to %s swap events", p.ExchangePair())
-	subscription, err := vaultFilterer.WatchSwap(watchOpts, eventSink, poolIdParam, tokenInParam, tokenOutParam)
+	subscription, err := vaultFilterer.WatchSwap(opts, eventSink, poolIdParam, tokenInParam, tokenOutParam)
 	if err != nil {
 		return err
 	}
@@ -167,7 +166,7 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 			return err
 		case event := <-eventSink:
 			// query rate from pool contract
-			poolRate, err := poolCaller.GetRate(callOpts)
+			poolRate, err := poolCaller.GetRate(nil)
 			if err != nil {
 				return err
 			}

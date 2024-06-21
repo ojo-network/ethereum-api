@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	balancerpool "github.com/ojo-network/ethereum-api/abi/balancer/pool"
 	"github.com/ojo-network/ethereum-api/abi/camelot"
 	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/ethereum-api/pool"
@@ -27,6 +28,10 @@ func (c *Client) PollSpotPrices(pools []pool.Pool) {
 						c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
 						c.indexer.AddPrice(spotPrice)
 					case pool.PoolAlgebra:
+						spotPrice = c.QueryAlgebraSpotPrice(p, blockNum)
+						c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
+						c.indexer.AddPrice(spotPrice)
+					case pool.PoolBalancer:
 						spotPrice = c.QueryAlgebraSpotPrice(p, blockNum)
 						c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
 						c.indexer.AddPrice(spotPrice)
@@ -74,5 +79,25 @@ func (c *Client) QueryAlgebraSpotPrice(p pool.Pool, blockNum uint64) indexer.Spo
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
 		Price:        p.SqrtPriceX96ToDec(globalState.Price),
+	}
+}
+
+// QueryBalancerSpotPrice queries the spot price of a balancer pool
+func (c *Client) QueryBalancerSpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
+	poolCaller, err := balancerpool.NewPoolCaller(common.HexToAddress(p.Address), c.ethClient)
+	if err != nil {
+		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
+		return indexer.SpotPrice{}
+	}
+	poolRate, err := poolCaller.GetRate(nil)
+	if err != nil {
+		c.reportError(fmt.Errorf("error getting %s pool balance: %w", p.ExchangePair(), err))
+		return indexer.SpotPrice{}
+	}
+	return indexer.SpotPrice{
+		BlockNum:     indexer.BlockNum(blockNum),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        p.SqrtPriceX96ToDec(poolRate),
 	}
 }
