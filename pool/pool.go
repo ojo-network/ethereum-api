@@ -68,7 +68,7 @@ func (p *Pool) ConvertBalancerEventToSpotPrice(event *vault.PoolSwap, price *big
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
-		Price:        p.SqrtPriceX96ToDec(price),
+		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(price, 18),
 	}
 }
 

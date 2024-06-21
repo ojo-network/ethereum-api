@@ -3,6 +3,8 @@ package client
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/ethereum/go-ethereum/common"
 	balancerpool "github.com/ojo-network/ethereum-api/abi/balancer/pool"
 	"github.com/ojo-network/ethereum-api/abi/camelot"
@@ -32,7 +34,7 @@ func (c *Client) PollSpotPrices(pools []pool.Pool) {
 						c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
 						c.indexer.AddPrice(spotPrice)
 					case pool.PoolBalancer:
-						spotPrice = c.QueryAlgebraSpotPrice(p, blockNum)
+						spotPrice = c.QueryBalancerSpotPrice(p, blockNum)
 						c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
 						c.indexer.AddPrice(spotPrice)
 					}
@@ -98,6 +100,6 @@ func (c *Client) QueryBalancerSpotPrice(p pool.Pool, blockNum uint64) indexer.Sp
 		BlockNum:     indexer.BlockNum(blockNum),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
-		Price:        p.SqrtPriceX96ToDec(poolRate),
+		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(poolRate, 18),
 	}
 }
