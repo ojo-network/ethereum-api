@@ -5,7 +5,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ojo-network/ethereum-api/abi"
+	balancerpool "github.com/ojo-network/ethereum-api/abi/balancer/pool"
+	"github.com/ojo-network/ethereum-api/abi/balancer/vault"
+	"github.com/ojo-network/ethereum-api/abi/camelot"
+	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/ethereum-api/pool"
 )
 
@@ -28,6 +31,11 @@ func (c *Client) WatchSwapsAndRestart(p pool.Pool) {
 					if err != nil {
 						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
 					}
+				case pool.PoolBalancer:
+					err := c.WatchBalancerSwapEvent(p)
+					if err != nil {
+						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
+					}
 				}
 			}
 		}
@@ -36,12 +44,12 @@ func (c *Client) WatchSwapsAndRestart(p pool.Pool) {
 
 // WatchUniswapSwapEvent watches for swap events on a uniswap pool
 func (c *Client) WatchUniswapSwapEvent(p pool.Pool) error {
-	poolFilterer, err := abi.NewPoolFilterer(common.HexToAddress(p.Address), c.ethClient)
+	poolFilterer, err := uniswap.NewPoolFilterer(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		return err
 	}
 
-	eventSink := make(chan *abi.PoolSwap)
+	eventSink := make(chan *uniswap.PoolSwap)
 	opts := &bind.WatchOpts{Start: nil, Context: c.ctx}
 	c.logger.Info().Msgf("subscribing to %s swap events", p.ExchangePair())
 	subscription, err := poolFilterer.WatchSwap(opts, eventSink, nil, nil)
@@ -58,8 +66,8 @@ func (c *Client) WatchUniswapSwapEvent(p pool.Pool) error {
 		case err := <-subscription.Err():
 			return err
 		case event := <-eventSink:
-			swap := p.ConvertEventToSwap(event)
-			spotPrice := p.ConvertEventToSpotPrice(event)
+			swap := p.ConvertUniswapEventToSwap(event)
+			spotPrice := p.ConvertUniswapEventToSpotPrice(event)
 			c.logger.Info().Interface("uniswap swap", swap).Msg("uniswap swap event received")
 			c.indexer.AddSwap(swap)
 			c.indexer.AddPrice(spotPrice)
@@ -69,12 +77,12 @@ func (c *Client) WatchUniswapSwapEvent(p pool.Pool) error {
 
 // WatchAlgebraSwapEvent watches for swap events on an alegbra pool
 func (c *Client) WatchAlgebraSwapEvent(p pool.Pool) error {
-	poolFilterer, err := abi.NewAlgebraPoolFilterer(common.HexToAddress(p.Address), c.ethClient)
+	poolFilterer, err := camelot.NewAlgebraPoolFilterer(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		return err
 	}
 
-	eventSink := make(chan *abi.AlgebraPoolSwap)
+	eventSink := make(chan *camelot.AlgebraPoolSwap)
 	opts := &bind.WatchOpts{Start: nil, Context: c.ctx}
 	c.logger.Info().Msgf("subscribing to %s swap events", p.ExchangePair())
 	subscription, err := poolFilterer.WatchSwap(opts, eventSink, nil, nil)
@@ -94,6 +102,78 @@ func (c *Client) WatchAlgebraSwapEvent(p pool.Pool) error {
 			swap := p.ConvertAlgebraEventToSwap(event)
 			spotPrice := p.ConvertAlgebraEventToSpotPrice(event)
 			c.logger.Info().Interface("alegbra swap", swap).Msg("algebra swap event received")
+			c.indexer.AddSwap(swap)
+			c.indexer.AddPrice(spotPrice)
+		}
+	}
+}
+
+// WatchBalancerSwapEvent watches for swap events on an balancer vault
+func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
+	// retreive vault address that supports this pool and pool id
+	poolCaller, err := balancerpool.NewPoolCaller(common.HexToAddress(p.Address), c.ethClient)
+	if err != nil {
+		return err
+	}
+
+	vaultAddress, err := poolCaller.GetVault(nil)
+	if err != nil {
+		return err
+	}
+	poolId, err := poolCaller.GetPoolId(nil)
+	if err != nil {
+		return err
+	}
+
+	// retreive token addresses of pool
+	vaultCaller, err := vault.NewPoolCaller(vaultAddress, c.ethClient)
+	if err != nil {
+		return err
+	}
+	poolTokens, err := vaultCaller.GetPoolTokens(nil, poolId)
+	if err != nil {
+		return err
+	}
+
+	// build parameters for swap event subscription
+	poolIdParam := make([][32]byte, 1)
+	poolIdParam[0] = poolId
+	tokenInParam := make([]common.Address, 1)
+	tokenInParam[0] = poolTokens.Tokens[0]
+	tokenOutParam := make([]common.Address, 1)
+	tokenOutParam[0] = poolTokens.Tokens[1]
+
+	vaultFilterer, err := vault.NewPoolFilterer(vaultAddress, c.ethClient)
+	if err != nil {
+		return err
+	}
+
+	eventSink := make(chan *vault.PoolSwap)
+	opts := &bind.WatchOpts{Start: nil, Context: c.ctx}
+	c.logger.Info().Msgf("subscribing to %s swap events", p.ExchangePair())
+	subscription, err := vaultFilterer.WatchSwap(opts, eventSink, poolIdParam, tokenInParam, tokenOutParam)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-c.ctx.Done():
+			c.logger.Info().Msgf("unsubscribing from %s swap events", p.ExchangePair())
+			subscription.Unsubscribe()
+			return nil
+		case err := <-subscription.Err():
+			return err
+		case event := <-eventSink:
+			// query rate from pool contract
+			poolRate, err := poolCaller.GetRate(nil)
+			if err != nil {
+				return err
+			}
+
+			swap := p.ConvertBalancerEventToSwap(event, poolRate)
+			spotPrice := p.ConvertBalancerEventToSpotPrice(event, poolRate)
+			c.logger.Info().Interface("balancer swap", swap).Msg("algebra swap event received")
 			c.indexer.AddSwap(swap)
 			c.indexer.AddPrice(spotPrice)
 		}

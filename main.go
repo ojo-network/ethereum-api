@@ -44,7 +44,6 @@ func main() {
 		client.MaintainConnection(exchange, i, ctx, logger)
 	}
 
-
 	// Create new websocket and REST server
 	s, err := server.NewServer(logger, cfg.Server, cfg.AssetPairs())
 	if err != nil {

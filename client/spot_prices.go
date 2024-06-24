@@ -3,8 +3,12 @@ package client
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ojo-network/ethereum-api/abi"
+	balancerpool "github.com/ojo-network/ethereum-api/abi/balancer/pool"
+	"github.com/ojo-network/ethereum-api/abi/camelot"
+	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/ethereum-api/pool"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/ojo-network/indexer/utils"
@@ -29,6 +33,10 @@ func (c *Client) PollSpotPrices(pools []pool.Pool) {
 						spotPrice = c.QueryAlgebraSpotPrice(p, blockNum)
 						c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
 						c.indexer.AddPrice(spotPrice)
+					case pool.PoolBalancer:
+						spotPrice = c.QueryBalancerSpotPrice(p, blockNum)
+						c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
+						c.indexer.AddPrice(spotPrice)
 					}
 				}
 			}
@@ -38,7 +46,7 @@ func (c *Client) PollSpotPrices(pools []pool.Pool) {
 
 // QueryUniswapSpotPrice queries the spot price of a uniswap pool
 func (c *Client) QueryUniswapSpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
-	poolCaller, err := abi.NewPoolCaller(common.HexToAddress(p.Address), c.ethClient)
+	poolCaller, err := uniswap.NewPoolCaller(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
 		return indexer.SpotPrice{}
@@ -58,7 +66,7 @@ func (c *Client) QueryUniswapSpotPrice(p pool.Pool, blockNum uint64) indexer.Spo
 
 // QueryAlgebraSpotPrice queries the spot price of an alegbra pool
 func (c *Client) QueryAlgebraSpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
-	poolCaller, err := abi.NewAlgebraPoolCaller(common.HexToAddress(p.Address), c.ethClient)
+	poolCaller, err := camelot.NewAlgebraPoolCaller(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
 		return indexer.SpotPrice{}
@@ -73,5 +81,25 @@ func (c *Client) QueryAlgebraSpotPrice(p pool.Pool, blockNum uint64) indexer.Spo
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
 		Price:        p.SqrtPriceX96ToDec(globalState.Price),
+	}
+}
+
+// QueryBalancerSpotPrice queries the spot price of a balancer pool
+func (c *Client) QueryBalancerSpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
+	poolCaller, err := balancerpool.NewPoolCaller(common.HexToAddress(p.Address), c.ethClient)
+	if err != nil {
+		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
+		return indexer.SpotPrice{}
+	}
+	poolRate, err := poolCaller.GetRate(nil)
+	if err != nil {
+		c.reportError(fmt.Errorf("error getting %s pool balance: %w", p.ExchangePair(), err))
+		return indexer.SpotPrice{}
+	}
+	return indexer.SpotPrice{
+		BlockNum:     indexer.BlockNum(blockNum),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(poolRate, 18),
 	}
 }

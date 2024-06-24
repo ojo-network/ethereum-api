@@ -5,25 +5,27 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/ojo-network/ethereum-api/abi"
+	"github.com/ojo-network/ethereum-api/abi/balancer/vault"
+	"github.com/ojo-network/ethereum-api/abi/camelot"
+	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/ojo-network/indexer/utils"
 )
 
 type Pool struct {
-	Address      string       `yaml:"address"`
-	Base         string       `yaml:"base"`
-	Quote        string       `yaml:"quote"`
-	BaseDecimal  uint64       `yaml:"base_decimal"`
-	QuoteDecimal uint64       `yaml:"quote_decimal"`
-	InvertPrice  bool         `yaml:"invert_price"`
+	Address      string `yaml:"address"`
+	Base         string `yaml:"base"`
+	Quote        string `yaml:"quote"`
+	BaseDecimal  uint64 `yaml:"base_decimal"`
+	QuoteDecimal uint64 `yaml:"quote_decimal"`
+	InvertPrice  bool   `yaml:"invert_price"`
 }
 
 func (p *Pool) ExchangePair() string {
 	return p.Base + "/" + p.Quote
 }
 
-func (p *Pool) ConvertEventToSpotPrice(event *abi.PoolSwap) indexer.SpotPrice {
+func (p *Pool) ConvertUniswapEventToSpotPrice(event *uniswap.PoolSwap) indexer.SpotPrice {
 	return indexer.SpotPrice{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
@@ -32,17 +34,17 @@ func (p *Pool) ConvertEventToSpotPrice(event *abi.PoolSwap) indexer.SpotPrice {
 	}
 }
 
-func (p *Pool) ConvertEventToSwap(event *abi.PoolSwap) indexer.Swap {
+func (p *Pool) ConvertUniswapEventToSwap(event *uniswap.PoolSwap) indexer.Swap {
 	return indexer.Swap{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
 		Price:        p.SqrtPriceX96ToDec(event.SqrtPriceX96),
-		Volume:       p.swapVolume(event),
+		Volume:       p.swapUniswapVolume(event),
 	}
 }
 
-func (p *Pool) ConvertAlgebraEventToSpotPrice(event *abi.AlgebraPoolSwap) indexer.SpotPrice {
+func (p *Pool) ConvertAlgebraEventToSpotPrice(event *camelot.AlgebraPoolSwap) indexer.SpotPrice {
 	return indexer.SpotPrice{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
@@ -51,13 +53,32 @@ func (p *Pool) ConvertAlgebraEventToSpotPrice(event *abi.AlgebraPoolSwap) indexe
 	}
 }
 
-func (p *Pool) ConvertAlgebraEventToSwap(event *abi.AlgebraPoolSwap) indexer.Swap {
+func (p *Pool) ConvertAlgebraEventToSwap(event *camelot.AlgebraPoolSwap) indexer.Swap {
 	return indexer.Swap{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
 		Price:        p.SqrtPriceX96ToDec(event.Price),
 		Volume:       p.swapAlgebraVolume(event),
+	}
+}
+
+func (p *Pool) ConvertBalancerEventToSpotPrice(event *vault.PoolSwap, price *big.Int) indexer.SpotPrice {
+	return indexer.SpotPrice{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(price, 18),
+	}
+}
+
+func (p *Pool) ConvertBalancerEventToSwap(event *vault.PoolSwap, price *big.Int) indexer.Swap {
+	return indexer.Swap{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        p.SqrtPriceX96ToDec(price),
+		Volume:       p.swapBalancerVolume(event),
 	}
 }
 
@@ -86,7 +107,7 @@ func (p *Pool) SqrtPriceX96ToDec(sqrtPriceX96 *big.Int) sdkmath.LegacyDec {
 	}
 }
 
-func (p *Pool) swapVolume(event *abi.PoolSwap) sdkmath.LegacyDec {
+func (p *Pool) swapUniswapVolume(event *uniswap.PoolSwap) sdkmath.LegacyDec {
 	if p.InvertPrice {
 		volume := sdkmath.LegacyNewDecFromBigInt(event.Amount1).Abs()
 		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))
@@ -96,12 +117,22 @@ func (p *Pool) swapVolume(event *abi.PoolSwap) sdkmath.LegacyDec {
 	}
 }
 
-func (p *Pool) swapAlgebraVolume(event *abi.AlgebraPoolSwap) sdkmath.LegacyDec {
+func (p *Pool) swapAlgebraVolume(event *camelot.AlgebraPoolSwap) sdkmath.LegacyDec {
 	if p.InvertPrice {
 		volume := sdkmath.LegacyNewDecFromBigInt(event.Amount1).Abs()
 		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))
 	} else {
 		volume := sdkmath.LegacyNewDecFromBigInt(event.Amount0).Abs()
+		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.BaseDecimal)))
+	}
+}
+
+func (p *Pool) swapBalancerVolume(event *vault.PoolSwap) sdkmath.LegacyDec {
+	if p.InvertPrice {
+		volume := sdkmath.LegacyNewDecFromBigInt(event.AmountOut).Abs()
+		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))
+	} else {
+		volume := sdkmath.LegacyNewDecFromBigInt(event.AmountIn).Abs()
 		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.BaseDecimal)))
 	}
 }
