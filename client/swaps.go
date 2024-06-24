@@ -173,7 +173,7 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 
 			swap := p.ConvertBalancerEventToSwap(event, poolRate)
 			spotPrice := p.ConvertBalancerEventToSpotPrice(event, poolRate)
-			c.logger.Info().Interface("alegbra swap", swap).Msg("algebra swap event received")
+			c.logger.Info().Interface("balancer swap", swap).Msg("algebra swap event received")
 			c.indexer.AddSwap(swap)
 			c.indexer.AddPrice(spotPrice)
 		}
