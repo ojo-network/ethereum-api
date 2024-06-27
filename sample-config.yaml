@@ -68,7 +68,7 @@ exchanges:
       - "wss://mainnet.infura.io/ws/v3/6849a09aeeb044b592d46bcdce07ccef"
     pools:
       - address: "0x596192bB6e41802428Ac943D2f1476C1Af25CC0E"
-        base: "ezETH"
+        base: "EZETH"
         quote: "WETH"
         base_decimal: 18
         quote_decimal: 18
