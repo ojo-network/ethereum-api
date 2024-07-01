@@ -73,6 +73,12 @@ exchanges:
         base_decimal: 18
         quote_decimal: 18
         invert_price: false
+      - address: "0x4216d5900a6109bba48418b5e2AB6cc4e61Cf477"
+        base: "TRENSTETH"
+        quote: "ETH"
+        base_decimal: 18
+        quote_decimal: 18
+        invert_price: false
 
 server:
   listen_addr: "0.0.0.0:5005"
