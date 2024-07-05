@@ -125,23 +125,13 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 		return err
 	}
 
-	// retreive token addresses of pool
-	vaultCaller, err := vault.NewPoolCaller(vaultAddress, c.ethClient)
-	if err != nil {
-		return err
-	}
-	poolTokens, err := vaultCaller.GetPoolTokens(nil, poolId)
-	if err != nil {
-		return err
-	}
-
 	// build parameters for swap event subscription
 	poolIdParam := make([][32]byte, 1)
 	poolIdParam[0] = poolId
 	tokenInParam := make([]common.Address, 1)
-	tokenInParam[0] = poolTokens.Tokens[0]
+	tokenInParam[0] = common.HexToAddress(p.TokenAddress)
 	tokenOutParam := make([]common.Address, 1)
-	tokenOutParam[0] = poolTokens.Tokens[1]
+	tokenOutParam[0] = common.HexToAddress(p.TokenAddress)
 
 	vaultFilterer, err := vault.NewPoolFilterer(vaultAddress, c.ethClient)
 	if err != nil {
@@ -173,7 +163,7 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 
 			swap := p.ConvertBalancerEventToSwap(event, poolRate)
 			spotPrice := p.ConvertBalancerEventToSpotPrice(event, poolRate)
-			c.logger.Info().Interface("balancer swap", swap).Msg("algebra swap event received")
+			c.logger.Info().Interface("balancer swap", swap).Msg("balancer swap event received")
 			c.indexer.AddSwap(swap)
 			c.indexer.AddPrice(spotPrice)
 		}
