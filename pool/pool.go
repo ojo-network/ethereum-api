@@ -14,6 +14,7 @@ import (
 
 type Pool struct {
 	Address      string `yaml:"address"`
+	TokenAddress string `yaml:"token_address"`
 	Base         string `yaml:"base"`
 	Quote        string `yaml:"quote"`
 	BaseDecimal  uint64 `yaml:"base_decimal"`

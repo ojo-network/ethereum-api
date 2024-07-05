@@ -67,9 +67,10 @@ exchanges:
     node_urls:
       - "wss://mainnet.infura.io/ws/v3/6849a09aeeb044b592d46bcdce07ccef"
     pools:
-      - address: "0x596192bB6e41802428Ac943D2f1476C1Af25CC0E"
-        base: "EZETH"
-        quote: "WETH"
+      - address: "0x4216d5900a6109bba48418b5e2AB6cc4e61Cf477"
+        token_address: "0x84631c0d0081FDe56DeB72F6DE77abBbF6A9f93a"
+        base: "RE7LRT"
+        quote: "ETH"
         base_decimal: 18
         quote_decimal: 18
         invert_price: false
