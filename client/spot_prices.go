@@ -91,6 +91,7 @@ func (c *Client) QueryBalancerSpotPrice(p pool.Pool, blockNum uint64) indexer.Sp
 		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
 		return indexer.SpotPrice{}
 	}
+
 	poolRate, err := poolCaller.GetTokenRate(nil, common.HexToAddress(p.BaseAddress))
 	if err != nil {
 		c.reportError(fmt.Errorf("error getting %s token rate from pool: %w", p.ExchangePair(), err))
