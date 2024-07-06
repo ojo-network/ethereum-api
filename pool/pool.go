@@ -13,13 +13,14 @@ import (
 )
 
 type Pool struct {
-	Address      string `yaml:"address"`
-	TokenAddress string `yaml:"token_address"`
-	Base         string `yaml:"base"`
-	Quote        string `yaml:"quote"`
-	BaseDecimal  uint64 `yaml:"base_decimal"`
-	QuoteDecimal uint64 `yaml:"quote_decimal"`
-	InvertPrice  bool   `yaml:"invert_price"`
+	Address        string   `yaml:"address"`
+	Base           string   `yaml:"base"`
+	Quote          string   `yaml:"quote"`
+	BaseAddress    string   `yaml:"base_address"`
+	QuoteAddresses []string `yaml:"quote_addresses"`
+	BaseDecimal    uint64   `yaml:"base_decimal"`
+	QuoteDecimal   uint64   `yaml:"quote_decimal"`
+	InvertPrice    bool     `yaml:"invert_price"`
 }
 
 func (p *Pool) ExchangePair() string {
