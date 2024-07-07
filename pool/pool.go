@@ -79,7 +79,7 @@ func (p *Pool) ConvertBalancerEventToSwap(event *vault.PoolSwap, price *big.Int)
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
-		Price:        p.SqrtPriceX96ToDec(price),
+		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(price, 18),
 		Volume:       p.swapBalancerVolume(event),
 	}
 }
