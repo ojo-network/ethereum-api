@@ -129,9 +129,11 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 	poolIdParam := make([][32]byte, 1)
 	poolIdParam[0] = poolId
 	tokenInParam := make([]common.Address, 1)
-	tokenInParam[0] = common.HexToAddress(p.TokenAddress)
-	tokenOutParam := make([]common.Address, 1)
-	tokenOutParam[0] = common.HexToAddress(p.TokenAddress)
+	tokenInParam[0] = common.HexToAddress(p.BaseAddress)
+	tokenOutParam := []common.Address{}
+	for _, tokenAddress := range p.QuoteAddresses{
+		tokenOutParam = append(tokenOutParam, common.HexToAddress(tokenAddress))
+	}
 
 	vaultFilterer, err := vault.NewPoolFilterer(vaultAddress, c.ethClient)
 	if err != nil {
@@ -156,7 +158,7 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 			return err
 		case event := <-eventSink:
 			// query rate from pool contract
-			poolRate, err := poolCaller.GetRate(nil)
+			poolRate, err := poolCaller.GetTokenRate(nil, common.HexToAddress(p.BaseAddress))
 			if err != nil {
 				return err
 			}

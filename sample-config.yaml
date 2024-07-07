@@ -68,9 +68,50 @@ exchanges:
       - "wss://mainnet.infura.io/ws/v3/6849a09aeeb044b592d46bcdce07ccef"
     pools:
       - address: "0x4216d5900a6109bba48418b5e2AB6cc4e61Cf477"
-        token_address: "0x84631c0d0081FDe56DeB72F6DE77abBbF6A9f93a"
+        base: "AMPHRETH"
+        quote: "ETH"
+        base_address: "0x5fD13359Ba15A84B76f7F87568309040176167cd"
+        quote_addresses:
+          - "0x7a4EffD87C2f3C55CA251080b1343b605f327E3a"
+          - "0x84631c0d0081FDe56DeB72F6DE77abBbF6A9f93a"
+          - "0xBEEF69Ac7870777598A04B2bd4771c71212E6aBc"
+          - "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
+        base_decimal: 18
+        quote_decimal: 18
+        invert_price: false
+      - address: "0x4216d5900a6109bba48418b5e2AB6cc4e61Cf477"
+        base: "RSTETH"
+        quote: "ETH"
+        base_address: "0x7a4EffD87C2f3C55CA251080b1343b605f327E3a"
+        quote_addresses:
+          - "0x5fD13359Ba15A84B76f7F87568309040176167cd"
+          - "0x84631c0d0081FDe56DeB72F6DE77abBbF6A9f93a"
+          - "0xBEEF69Ac7870777598A04B2bd4771c71212E6aBc"
+          - "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
+        base_decimal: 18
+        quote_decimal: 18
+        invert_price: false
+      - address: "0x4216d5900a6109bba48418b5e2AB6cc4e61Cf477"
         base: "RE7LRT"
         quote: "ETH"
+        base_address: "0x84631c0d0081FDe56DeB72F6DE77abBbF6A9f93a"
+        quote_addresses:
+          - "0x5fD13359Ba15A84B76f7F87568309040176167cd"
+          - "0x7a4EffD87C2f3C55CA251080b1343b605f327E3a"
+          - "0xBEEF69Ac7870777598A04B2bd4771c71212E6aBc"
+          - "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
+        base_decimal: 18
+        quote_decimal: 18
+        invert_price: false
+      - address: "0x4216d5900a6109bba48418b5e2AB6cc4e61Cf477"
+        base: "STEAKLRT"
+        quote: "ETH"
+        base_address: "0xBEEF69Ac7870777598A04B2bd4771c71212E6aBc"
+        quote_addresses:
+          - "0x5fD13359Ba15A84B76f7F87568309040176167cd"
+          - "0x7a4EffD87C2f3C55CA251080b1343b605f327E3a"
+          - "0x84631c0d0081FDe56DeB72F6DE77abBbF6A9f93a"
+          - "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
         base_decimal: 18
         quote_decimal: 18
         invert_price: false
