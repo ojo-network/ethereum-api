@@ -8,6 +8,7 @@ import (
 	balancerpool "github.com/ojo-network/ethereum-api/abi/balancer/pool"
 	"github.com/ojo-network/ethereum-api/abi/balancer/vault"
 	"github.com/ojo-network/ethereum-api/abi/camelot"
+	"github.com/ojo-network/ethereum-api/abi/pancake"
 	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/ethereum-api/pool"
 )
@@ -33,6 +34,11 @@ func (c *Client) WatchSwapsAndRestart(p pool.Pool) {
 					}
 				case pool.PoolBalancer:
 					err := c.WatchBalancerSwapEvent(p)
+					if err != nil {
+						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
+					}
+				case pool.PoolPancake:
+					err := c.WatchPancakeSwapEvent(p)
 					if err != nil {
 						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
 					}
@@ -131,7 +137,7 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 	tokenInParam := make([]common.Address, 1)
 	tokenInParam[0] = common.HexToAddress(p.BaseAddress)
 	tokenOutParam := []common.Address{}
-	for _, tokenAddress := range p.QuoteAddresses{
+	for _, tokenAddress := range p.QuoteAddresses {
 		tokenOutParam = append(tokenOutParam, common.HexToAddress(tokenAddress))
 	}
 
@@ -166,6 +172,39 @@ func (c *Client) WatchBalancerSwapEvent(p pool.Pool) error {
 			swap := p.ConvertBalancerEventToSwap(event, poolRate)
 			spotPrice := p.ConvertBalancerEventToSpotPrice(event, poolRate)
 			c.logger.Info().Interface("balancer swap", swap).Msg("balancer swap event received")
+			c.indexer.AddSwap(swap)
+			c.indexer.AddPrice(spotPrice)
+		}
+	}
+}
+
+// WatchPancakeSwapEvent watches for swap events on a pancake pool
+func (c *Client) WatchPancakeSwapEvent(p pool.Pool) error {
+	pancakeFilterer, err := pancake.NewPancakeFilterer(common.HexToAddress(p.Address), c.ethClient)
+	if err != nil {
+		return err
+	}
+
+	eventSink := make(chan *pancake.PancakeSwap)
+	opts := &bind.WatchOpts{Start: nil, Context: c.ctx}
+	c.logger.Info().Msgf("subscribing to %s swap events", p.ExchangePair())
+	subscription, err := pancakeFilterer.WatchSwap(opts, eventSink, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-c.ctx.Done():
+			c.logger.Info().Msgf("unsubscribing from %s swap events", p.ExchangePair())
+			subscription.Unsubscribe()
+			return nil
+		case err := <-subscription.Err():
+			return err
+		case event := <-eventSink:
+			swap := p.ConvertPancakeEventToSwap(event)
+			spotPrice := p.ConvertPancakeEventToSpotPrice(event)
+			c.logger.Info().Interface("pancake swap", swap).Msg("pancake swap event received")
 			c.indexer.AddSwap(swap)
 			c.indexer.AddPrice(spotPrice)
 		}

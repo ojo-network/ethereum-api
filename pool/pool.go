@@ -7,6 +7,7 @@ import (
 
 	"github.com/ojo-network/ethereum-api/abi/balancer/vault"
 	"github.com/ojo-network/ethereum-api/abi/camelot"
+	"github.com/ojo-network/ethereum-api/abi/pancake"
 	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/indexer/indexer"
 	"github.com/ojo-network/indexer/utils"
@@ -84,6 +85,25 @@ func (p *Pool) ConvertBalancerEventToSwap(event *vault.PoolSwap, price *big.Int)
 	}
 }
 
+func (p *Pool) ConvertPancakeEventToSpotPrice(event *pancake.PancakeSwap) indexer.SpotPrice {
+	return indexer.SpotPrice{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        p.SqrtPriceX96ToDec(event.SqrtPriceX96),
+	}
+}
+
+func (p *Pool) ConvertPancakeEventToSwap(event *pancake.PancakeSwap) indexer.Swap {
+	return indexer.Swap{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        p.SqrtPriceX96ToDec(event.SqrtPriceX96),
+		Volume:       p.swapPancakeVolume(event),
+	}
+}
+
 func (p *Pool) SqrtPriceX96ToDec(sqrtPriceX96 *big.Int) sdkmath.LegacyDec {
 	sdkValue := sdkmath.LegacyNewDecFromBigInt(sqrtPriceX96)
 
@@ -135,6 +155,16 @@ func (p *Pool) swapBalancerVolume(event *vault.PoolSwap) sdkmath.LegacyDec {
 		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))
 	} else {
 		volume := sdkmath.LegacyNewDecFromBigInt(event.AmountIn).Abs()
+		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.BaseDecimal)))
+	}
+}
+
+func (p *Pool) swapPancakeVolume(event *pancake.PancakeSwap) sdkmath.LegacyDec {
+	if p.InvertPrice {
+		volume := sdkmath.LegacyNewDecFromBigInt(event.Amount1).Abs()
+		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))
+	} else {
+		volume := sdkmath.LegacyNewDecFromBigInt(event.Amount0).Abs()
 		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.BaseDecimal)))
 	}
 }

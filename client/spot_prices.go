@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	balancerpool "github.com/ojo-network/ethereum-api/abi/balancer/pool"
 	"github.com/ojo-network/ethereum-api/abi/camelot"
+	"github.com/ojo-network/ethereum-api/abi/pancake"
 	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/ethereum-api/pool"
 	"github.com/ojo-network/indexer/indexer"
@@ -27,15 +28,19 @@ func (c *Client) PollSpotPrices(pools []pool.Pool) {
 					switch c.poolContract {
 					case pool.PoolUniswap:
 						spotPrice = c.QueryUniswapSpotPrice(p, blockNum)
-						c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
+						c.logger.Info().Interface("Uniswap spotPrice", spotPrice).Msg("spot price received")
 						c.indexer.AddPrice(spotPrice)
 					case pool.PoolAlgebra:
 						spotPrice = c.QueryAlgebraSpotPrice(p, blockNum)
-						c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
+						c.logger.Info().Interface("Alegbra spotPrice", spotPrice).Msg("spot price received")
 						c.indexer.AddPrice(spotPrice)
 					case pool.PoolBalancer:
 						spotPrice = c.QueryBalancerSpotPrice(p, blockNum)
-						c.logger.Info().Interface("spotPrice", spotPrice).Msg("spot price received")
+						c.logger.Info().Interface("Balancer spotPrice", spotPrice).Msg("spot price received")
+						c.indexer.AddPrice(spotPrice)
+					case pool.PoolPancake:
+						spotPrice = c.QueryPancakeSpotPrice(p, blockNum)
+						c.logger.Info().Interface("Pancake spotPrice", spotPrice).Msg("spot price received")
 						c.indexer.AddPrice(spotPrice)
 					}
 				}
@@ -102,5 +107,25 @@ func (c *Client) QueryBalancerSpotPrice(p pool.Pool, blockNum uint64) indexer.Sp
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
 		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(poolRate, 18),
+	}
+}
+
+// QueryPancakeSpotPrice queries the spot price of a pancake pool
+func (c *Client) QueryPancakeSpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
+	pancakeCaller, err := pancake.NewPancakeCaller(common.HexToAddress(p.Address), c.ethClient)
+	if err != nil {
+		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
+		return indexer.SpotPrice{}
+	}
+	slot0, err := pancakeCaller.Slot0(nil)
+	if err != nil {
+		c.reportError(fmt.Errorf("error getting %s pool balance: %w", p.ExchangePair(), err))
+		return indexer.SpotPrice{}
+	}
+	return indexer.SpotPrice{
+		BlockNum:     indexer.BlockNum(blockNum),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        p.SqrtPriceX96ToDec(slot0.SqrtPriceX96),
 	}
 }
