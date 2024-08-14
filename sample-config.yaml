@@ -115,6 +115,16 @@ exchanges:
         base_decimal: 18
         quote_decimal: 18
         invert_price: false
+  - name: "pancake"
+    node_urls:
+      - "wss://mainnet.infura.io/ws/v3/6849a09aeeb044b592d46bcdce07ccef"
+    pools:
+      - address: "0x365EA9E5Cec960390f35b6509548e84073168A8B"
+        base: "SWBTC"
+        quote: "WBTC"
+        base_decimal: 18
+        quote_decimal: 18
+        invert_price: false
 
 server:
   listen_addr: "0.0.0.0:5005"
