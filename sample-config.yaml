@@ -2,8 +2,7 @@
 exchanges:
   - name: "uniswap"
     node_urls:
-      - "wss://ethereum-mainnet.core.chainstack.com/ws/5f899c2bcc20c7d53a77f049887752ca"
-      - "wss://ethereum.publicnode.com"
+      - "YOUR NODE URL HERE"
     pools:
       - address: "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
         base: "WETH"
@@ -55,7 +54,7 @@ exchanges:
         invert_price: false
   - name: "camelot"
     node_urls:
-      - "wss://arbitrum-one-rpc.publicnode.com"
+      - "YOUR NODE URL HERE"
     pools:
       - address: "0x8Bf9C3975172c57E37b3D1c1348e9b5280FB3BaA"
         base: "MILKTIA"
@@ -65,7 +64,7 @@ exchanges:
         invert_price: false
   - name: "balancer"
     node_urls:
-      - "wss://mainnet.infura.io/ws/v3/6849a09aeeb044b592d46bcdce07ccef"
+      - "YOUR NODE URL HERE"
     pools:
       - address: "0x4216d5900a6109bba48418b5e2AB6cc4e61Cf477"
         base: "AMPHRETH"
@@ -117,7 +116,7 @@ exchanges:
         invert_price: false
   - name: "pancake"
     node_urls:
-      - "wss://mainnet.infura.io/ws/v3/6849a09aeeb044b592d46bcdce07ccef"
+      - "YOUR NODE URL HERE"
     pools:
       - address: "0x365EA9E5Cec960390f35b6509548e84073168A8B"
         base: "SWBTC"

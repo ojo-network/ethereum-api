@@ -2,11 +2,18 @@ package config
 
 import (
 	"fmt"
-	"os"
+	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/ojo-network/ethereum-api/pool"
 	"github.com/ojo-network/indexer/server"
-	"gopkg.in/yaml.v3"
+	"github.com/spf13/viper"
+)
+
+const (
+	configFileType    = "yaml"
+	envVariablePrefix = "eth_api"
+	structTagName     = "yaml"
 )
 
 type Exchange struct {
@@ -23,15 +30,33 @@ type Config struct {
 func ParseConfig(filePath string) (*Config, error) {
 	config := Config{}
 
-	yamlFile, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, err
+	vpr := viper.New()
+	vpr.SetConfigFile(filePath)
+	vpr.SetConfigType(configFileType)
+	vpr.SetEnvPrefix(envVariablePrefix)
+	vpr.AutomaticEnv()
+	vpr.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	if err := vpr.ReadInConfig(); err != nil {
+		return &config, fmt.Errorf("couldn't load config: %s", err)
 	}
 
-	err = yaml.Unmarshal(yamlFile, &config)
-	if err != nil {
-		return nil, err
+	tagConfig := func(decoderConfig *mapstructure.DecoderConfig) {
+		decoderConfig.TagName = structTagName
 	}
+
+	if err := vpr.Unmarshal(&config, tagConfig); err != nil {
+		return &config, fmt.Errorf("couldn't read config: %s", err)
+	}
+
+	// Split NodeUrls from environment variables
+	for i := range config.Exchanges {
+		envVarName := fmt.Sprintf("exchanges.%d.node_urls", i)
+		if v := vpr.GetString(envVarName); v != "" {
+			config.Exchanges[i].NodeUrls = strings.Split(v, ",")
+		}
+	}
+
 	return &config, config.Validate()
 }
 
