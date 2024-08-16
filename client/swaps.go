@@ -2,12 +2,14 @@ package client
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	balancerpool "github.com/ojo-network/ethereum-api/abi/balancer/pool"
 	"github.com/ojo-network/ethereum-api/abi/balancer/vault"
 	"github.com/ojo-network/ethereum-api/abi/camelot"
+	"github.com/ojo-network/ethereum-api/abi/curve"
 	"github.com/ojo-network/ethereum-api/abi/pancake"
 	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/ethereum-api/pool"
@@ -39,6 +41,11 @@ func (c *Client) WatchSwapsAndRestart(p pool.Pool) {
 					}
 				case pool.PoolPancake:
 					err := c.WatchPancakeSwapEvent(p)
+					if err != nil {
+						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
+					}
+				case pool.PoolCurve:
+					err := c.WatchCurveSwapEvent(p)
 					if err != nil {
 						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
 					}
@@ -205,6 +212,52 @@ func (c *Client) WatchPancakeSwapEvent(p pool.Pool) error {
 			swap := p.ConvertPancakeEventToSwap(event)
 			spotPrice := p.ConvertPancakeEventToSpotPrice(event)
 			c.logger.Info().Interface("pancake swap", swap).Msg("pancake swap event received")
+			c.indexer.AddSwap(swap)
+			c.indexer.AddPrice(spotPrice)
+		}
+	}
+}
+
+// WatchCurveSwapEvent watches for swap events on a curve pool
+func (c *Client) WatchCurveSwapEvent(p pool.Pool) error {
+	curveCaller, err := curve.NewCurveCaller(common.HexToAddress(p.Address), c.ethClient)
+	if err != nil {
+		return err
+	}
+
+	curveFilterer, err := curve.NewCurveFilterer(common.HexToAddress(p.Address), c.ethClient)
+	if err != nil {
+		return err
+	}
+
+	eventSink := make(chan *curve.CurveTokenExchange)
+	opts := &bind.WatchOpts{Start: nil, Context: c.ctx}
+	c.logger.Info().Msgf("subscribing to %s swap events", p.ExchangePair())
+	subscription, err := curveFilterer.WatchTokenExchange(opts, eventSink, nil)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-c.ctx.Done():
+			c.logger.Info().Msgf("unsubscribing from %s swap events", p.ExchangePair())
+			subscription.Unsubscribe()
+			return nil
+		case err := <-subscription.Err():
+			return err
+		case event := <-eventSink:
+			// price comes inverted
+			poolPriceInverted, err := curveCaller.LastPrice(nil, big.NewInt(0))
+			if err != nil {
+				return err
+			}
+			scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(36), nil)
+			poolPrice := new(big.Int).Quo(scale, poolPriceInverted)
+
+			swap := p.ConvertCurveEventToSwap(event, poolPrice)
+			spotPrice := p.ConvertCurveEventToSpotPrice(event, poolPrice)
+			c.logger.Info().Interface("curve swap", swap).Msg("curve swap event received")
 			c.indexer.AddSwap(swap)
 			c.indexer.AddPrice(spotPrice)
 		}
