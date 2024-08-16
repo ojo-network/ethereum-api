@@ -7,6 +7,7 @@ import (
 
 	"github.com/ojo-network/ethereum-api/abi/balancer/vault"
 	"github.com/ojo-network/ethereum-api/abi/camelot"
+	"github.com/ojo-network/ethereum-api/abi/curve"
 	"github.com/ojo-network/ethereum-api/abi/pancake"
 	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/indexer/indexer"
@@ -104,6 +105,25 @@ func (p *Pool) ConvertPancakeEventToSwap(event *pancake.PancakeSwap) indexer.Swa
 	}
 }
 
+func (p *Pool) ConvertCurveEventToSpotPrice(event *curve.CurveTokenExchange, price *big.Int) indexer.SpotPrice {
+	return indexer.SpotPrice{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        p.SqrtPriceX96ToDec(price),
+	}
+}
+
+func (p *Pool) ConvertCurveEventToSwap(event *curve.CurveTokenExchange, price *big.Int) indexer.Swap {
+	return indexer.Swap{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(price, 18),
+		Volume:       p.swapCurveVolume(event),
+	}
+}
+
 func (p *Pool) SqrtPriceX96ToDec(sqrtPriceX96 *big.Int) sdkmath.LegacyDec {
 	sdkValue := sdkmath.LegacyNewDecFromBigInt(sqrtPriceX96)
 
@@ -165,6 +185,16 @@ func (p *Pool) swapPancakeVolume(event *pancake.PancakeSwap) sdkmath.LegacyDec {
 		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))
 	} else {
 		volume := sdkmath.LegacyNewDecFromBigInt(event.Amount0).Abs()
+		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.BaseDecimal)))
+	}
+}
+
+func (p *Pool) swapCurveVolume(event *curve.CurveTokenExchange) sdkmath.LegacyDec {
+	if p.InvertPrice {
+		volume := sdkmath.LegacyNewDecFromBigInt(event.TokensBought).Abs()
+		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))
+	} else {
+		volume := sdkmath.LegacyNewDecFromBigInt(event.TokensSold).Abs()
 		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.BaseDecimal)))
 	}
 }
