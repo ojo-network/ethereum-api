@@ -71,15 +71,13 @@ func (c Config) Validate() (err error) {
 	return nil
 }
 
-func (c *Config) AssetPairs() []server.AssetPair {
+func (c *Config) AssetPairs(exchange Exchange) []server.AssetPair {
 	var assetPairs []server.AssetPair
-	for _, exchange := range c.Exchanges {
-		for _, pool := range exchange.Pools {
-			assetPairs = append(assetPairs, server.AssetPair{
-				Base:  pool.Base,
-				Quote: pool.Quote,
-			})
-		}
+	for _, pool := range exchange.Pools {
+		assetPairs = append(assetPairs, server.AssetPair{
+			Base:  pool.Base,
+			Quote: pool.Quote,
+		})
 	}
 
 	return assetPairs
