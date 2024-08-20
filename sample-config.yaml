@@ -124,6 +124,16 @@ exchanges:
         base_decimal: 18
         quote_decimal: 18
         invert_price: false
+  - name: "curve"
+    node_urls:
+      - "YOUR NODE URL HERE"
+    pools:
+      - address: "0x73e4bec1a111869f395cbb24f6676826bf86d905"
+        base: "SWBTC"
+        quote: "WBTC"
+        base_decimal: 18
+        quote_decimal: 18
+        invert_price: false
 
 server:
   listen_addr: "0.0.0.0:5005"
