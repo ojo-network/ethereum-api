@@ -28,10 +28,10 @@ func main() {
 	}
 
 	// Create new websocket and REST server for each exchange
-	for j, exchange := range cfg.Exchanges {
+	for iter, exchange := range cfg.Exchanges {
 		// Only register base health check on one server to avoid multiple registrations panic
 		var registerBaseHealthCheck bool
-		if j == 0 {
+		if iter == 0 {
 			registerBaseHealthCheck = true
 		} else {
 			registerBaseHealthCheck = false
