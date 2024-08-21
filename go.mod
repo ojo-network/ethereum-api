@@ -6,7 +6,7 @@ require (
 	cosmossdk.io/math v1.1.2
 	github.com/ethereum/go-ethereum v1.13.4
 	github.com/golangci/golangci-lint v1.55.2
-	github.com/ojo-network/indexer v0.0.5
+	github.com/ojo-network/indexer v0.0.6
 	github.com/rs/zerolog v1.31.0
 	github.com/spf13/viper v1.12.0
 )
