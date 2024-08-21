@@ -28,14 +28,22 @@ func main() {
 	}
 
 	// Create new websocket and REST server for each exchange
-	for _, exchange := range cfg.Exchanges {
+	for j, exchange := range cfg.Exchanges {
+		// Only register base health check on one server to avoid multiple registrations panic
+		var registerBaseHealthCheck bool
+		if j == 0 {
+			registerBaseHealthCheck = true
+		} else {
+			registerBaseHealthCheck = false
+		}
+
 		// Initialize indexer
 		i := indexer.NewIndexer(logger, ctx)
 
 		// Start and maintain connection to blockchain nodes
 		client.MaintainConnection(exchange, i, ctx, logger)
 
-		s, err := server.NewServer(logger, cfg.Server, cfg.AssetPairs(exchange))
+		s, err := server.NewServer(logger, cfg.Server, cfg.AssetPairs(exchange), registerBaseHealthCheck)
 		if err != nil {
 			logger.Error().Err(err).Msg("error creating server")
 			cancel()
