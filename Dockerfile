@@ -24,5 +24,9 @@ COPY --from=builder /app/ethereum-api /bin/ethereum-api
 COPY --from=builder /app/sample-config.yaml /app/config.yaml
 
 EXPOSE 5005
+EXPOSE 5006
+EXPOSE 5007
+EXPOSE 5008
+EXPOSE 5009
 
 ENTRYPOINT [ "ethereum-api" ]
