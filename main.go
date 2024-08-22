@@ -43,7 +43,7 @@ func main() {
 		// Start and maintain connection to blockchain nodes
 		client.MaintainConnection(exchange, i, ctx, logger)
 
-		s, err := server.NewServer(logger, cfg.Server, cfg.AssetPairs(exchange), registerBaseHealthCheck)
+		s, err := server.NewServer(logger, exchange.Server, cfg.AssetPairs(exchange), registerBaseHealthCheck)
 		if err != nil {
 			logger.Error().Err(err).Msg("error creating server")
 			cancel()
