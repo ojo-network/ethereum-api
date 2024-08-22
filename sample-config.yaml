@@ -52,6 +52,11 @@ exchanges:
         base_decimal: 18
         quote_decimal: 18
         invert_price: false
+    server:
+      listen_addr: "0.0.0.0:5005"
+      write_timeout: "20s"
+      read_timeout: "20s"
+      broadcast_interval: "5s"
   - name: "camelot"
     node_urls:
       - "YOUR NODE URL HERE"
@@ -62,6 +67,11 @@ exchanges:
         base_decimal: 6
         quote_decimal: 6
         invert_price: false
+    server:
+      listen_addr: "0.0.0.0:5006"
+      write_timeout: "20s"
+      read_timeout: "20s"
+      broadcast_interval: "5s"
   - name: "balancer"
     node_urls:
       - "YOUR NODE URL HERE"
@@ -114,6 +124,11 @@ exchanges:
         base_decimal: 18
         quote_decimal: 18
         invert_price: false
+    server:
+      listen_addr: "0.0.0.0:5007"
+      write_timeout: "20s"
+      read_timeout: "20s"
+      broadcast_interval: "5s"
   - name: "pancake"
     node_urls:
       - "YOUR NODE URL HERE"
@@ -124,6 +139,11 @@ exchanges:
         base_decimal: 18
         quote_decimal: 18
         invert_price: false
+    server:
+      listen_addr: "0.0.0.0:5008"
+      write_timeout: "20s"
+      read_timeout: "20s"
+      broadcast_interval: "5s"
   - name: "curve"
     node_urls:
       - "YOUR NODE URL HERE"
@@ -134,9 +154,8 @@ exchanges:
         base_decimal: 18
         quote_decimal: 18
         invert_price: false
-
-server:
-  listen_addr: "0.0.0.0:5005"
-  write_timeout: "20s"
-  read_timeout: "20s"
-  broadcast_interval: "5s"
+    server:
+      listen_addr: "0.0.0.0:5009"
+      write_timeout: "20s"
+      read_timeout: "20s"
+      broadcast_interval: "5s"

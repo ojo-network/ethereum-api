@@ -24,6 +24,8 @@ exchanges:
       - base: "WBTC"
         quote: "WETH"
         address: "testAddress1"
+    server:
+      listen_addr: "http://localhost:8080"
   - name: camelot
     node_urls:
       - http://node2.com
@@ -31,8 +33,8 @@ exchanges:
       - base: "WETH"
         quote: "USDC"
         address: "testAddress2"
-server:
-  listen_addr: "http://localhost:8080"
+    server:
+      listen_addr: "http://localhost:8081"
 `))
 	if err != nil {
 		t.Fatal(err)
@@ -59,11 +61,11 @@ server:
 
 	assert.Equal(t, "WBTC/WETH", config.Exchanges[0].Pools[0].ExchangePair())
 	assert.Equal(t, "testAddress1", config.Exchanges[0].Pools[0].Address)
+	assert.Equal(t, "http://localhost:8080", config.Exchanges[0].Server.ListenAddr)
 
 	assert.Equal(t, "WETH/USDC", config.Exchanges[1].Pools[0].ExchangePair())
 	assert.Equal(t, "testAddress2", config.Exchanges[1].Pools[0].Address)
-
-	assert.Equal(t, "http://localhost:8080", config.Server.ListenAddr)
+	assert.Equal(t, "http://localhost:8081", config.Exchanges[1].Server.ListenAddr)
 }
 
 func TestInvalidExchanges(t *testing.T) {
@@ -82,6 +84,8 @@ exchanges:
       - base: "WBTC"
         quote: "WETH"
         address: "testAddress1"
+    server:
+      listen_addr: "http://localhost:8080"
   - name: camelot
     node_urls:
       - http://node2.com
@@ -89,8 +93,8 @@ exchanges:
       - base: "WETH"
         quote: "USDC"
         address: "testAddress2"
-server:
-  listen_addr: "http://localhost:8080"
+    server:
+      listen_addr: "http://localhost:8081"
 `))
 	if err != nil {
 		t.Fatal(err)

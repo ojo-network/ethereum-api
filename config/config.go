@@ -17,14 +17,14 @@ const (
 )
 
 type Exchange struct {
-	Name     pool.ExchangeName `yaml:"name"`
-	NodeUrls []string          `yaml:"node_urls"`
-	Pools    []pool.Pool       `yaml:"pools"`
+	Name     pool.ExchangeName   `yaml:"name"`
+	NodeUrls []string            `yaml:"node_urls"`
+	Pools    []pool.Pool         `yaml:"pools"`
+	Server   server.ServerConfig `yaml:"server"`
 }
 
 type Config struct {
-	Exchanges []Exchange          `yaml:"exchanges"`
-	Server    server.ServerConfig `yaml:"server"`
+	Exchanges []Exchange `yaml:"exchanges"`
 }
 
 func ParseConfig(filePath string) (*Config, error) {
