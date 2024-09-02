@@ -7,12 +7,15 @@ const ExchangeUniswap ExchangeName = "uniswap"
 const ExchangeCamelot ExchangeName = "camelot"
 const ExchangeBalancer ExchangeName = "balancer"
 const ExchangePancake ExchangeName = "pancake"
-const ExchangeCurve ExchangeName = "curve"
+const ExchangeCurveStableSwapNG ExchangeName = "curvestableswapng"
+const ExchangeCurveTwoCryptoOptimized ExchangeName = "curvetwocryptooptimized"
+
 const PoolUniswap PoolContract = "uniswappool"
 const PoolAlgebra PoolContract = "algebrapool"
 const PoolBalancer PoolContract = "balancerpool"
 const PoolPancake PoolContract = "pancakepool"
-const PoolCurve PoolContract = "curvepool"
+const PoolCurveStableSwapNG PoolContract = "curvestableswapngpool"
+const PoolCurveTwoCryptoOptimized PoolContract = "curvetwocryptoptimizedpool"
 
 // maps exchange to pool contract of that exchange
 var SupportedExchanges = map[ExchangeName]PoolContract{
@@ -20,5 +23,7 @@ var SupportedExchanges = map[ExchangeName]PoolContract{
 	ExchangeCamelot:  PoolAlgebra,
 	ExchangeBalancer: PoolBalancer,
 	ExchangePancake:  PoolPancake,
-	ExchangeCurve:    PoolCurve,
+
+	ExchangeCurveStableSwapNG:       PoolCurveStableSwapNG,
+	ExchangeCurveTwoCryptoOptimized: PoolCurveTwoCryptoOptimized,
 }

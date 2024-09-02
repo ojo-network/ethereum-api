@@ -9,7 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	balancerpool "github.com/ojo-network/ethereum-api/abi/balancer/pool"
 	"github.com/ojo-network/ethereum-api/abi/camelot"
-	"github.com/ojo-network/ethereum-api/abi/curve"
+	"github.com/ojo-network/ethereum-api/abi/curve/stableswapng/curvestableswapng"
+	"github.com/ojo-network/ethereum-api/abi/curve/twocryptooptimized/curvetwocryptoptimized"
 	"github.com/ojo-network/ethereum-api/abi/pancake"
 	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/ethereum-api/pool"
@@ -44,9 +45,13 @@ func (c *Client) PollSpotPrices(pools []pool.Pool) {
 						spotPrice = c.QueryPancakeSpotPrice(p, blockNum)
 						c.logger.Info().Interface("Pancake spotPrice", spotPrice).Msg("spot price received")
 						c.indexer.AddPrice(spotPrice)
-					case pool.PoolCurve:
-						spotPrice = c.QueryCurveSpotPrice(p, blockNum)
-						c.logger.Info().Interface("Curve spotPrice", spotPrice).Msg("spot price received")
+					case pool.PoolCurveStableSwapNG:
+						spotPrice = c.QueryCurveStableSwapNGSpotPrice(p, blockNum)
+						c.logger.Info().Interface("Curve stableswapng spotPrice", spotPrice).Msg("spot price received")
+						c.indexer.AddPrice(spotPrice)
+					case pool.PoolCurveTwoCryptoOptimized:
+						spotPrice = c.QueryCurveTwoCryptoOptimizedSpotPrice(p, blockNum)
+						c.logger.Info().Interface("Curve twocryptooptimized spotPrice", spotPrice).Msg("spot price received")
 						c.indexer.AddPrice(spotPrice)
 					}
 				}
@@ -136,9 +141,34 @@ func (c *Client) QueryPancakeSpotPrice(p pool.Pool, blockNum uint64) indexer.Spo
 	}
 }
 
-// QueryCurveSpotPrice queries the spot price of a curve pool
-func (c *Client) QueryCurveSpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
-	curveCaller, err := curve.NewCurveCaller(common.HexToAddress(p.Address), c.ethClient)
+// QueryCurveStableSwapNGSpotPrice queries the spot price of a curve stableswapng pool
+func (c *Client) QueryCurveStableSwapNGSpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
+	curveCaller, err := curvestableswapng.NewCurveStableSwapNGCaller(common.HexToAddress(p.Address), c.ethClient)
+	if err != nil {
+		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
+		return indexer.SpotPrice{}
+	}
+
+	// price comes inverted
+	poolPriceInverted, err := curveCaller.LastPrice(nil, big.NewInt(0))
+	if err != nil {
+		c.reportError(fmt.Errorf("error getting %s token last price from pool: %w", p.ExchangePair(), err))
+		return indexer.SpotPrice{}
+	}
+	scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(36), nil)
+	poolPrice := new(big.Int).Quo(scale, poolPriceInverted)
+
+	return indexer.SpotPrice{
+		BlockNum:     indexer.BlockNum(blockNum),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(poolPrice, 18),
+	}
+}
+
+// QueryCurveTwoCryptoOptimizedSpotPrice queries the spot price of a curve twocryptooptimized pool
+func (c *Client) QueryCurveTwoCryptoOptimizedSpotPrice(p pool.Pool, blockNum uint64) indexer.SpotPrice {
+	curveCaller, err := curvetwocryptoptimized.NewCurveTwocryptOptimizedCaller(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		c.reportError(fmt.Errorf("error initializing %s pool caller: %w", p.ExchangePair(), err))
 		return indexer.SpotPrice{}
