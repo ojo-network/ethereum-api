@@ -2,20 +2,20 @@ package pool
 
 type ExchangeName string
 type PoolContract string
+type PoolType string
 
 const ExchangeUniswap ExchangeName = "uniswap"
 const ExchangeCamelot ExchangeName = "camelot"
 const ExchangeBalancer ExchangeName = "balancer"
 const ExchangePancake ExchangeName = "pancake"
-const ExchangeCurveStableSwapNG ExchangeName = "curvestableswapng"
-const ExchangeCurveTwoCryptoOptimized ExchangeName = "curvetwocryptooptimized"
-
+const ExchangeCurve ExchangeName = "curve"
 const PoolUniswap PoolContract = "uniswappool"
 const PoolAlgebra PoolContract = "algebrapool"
 const PoolBalancer PoolContract = "balancerpool"
 const PoolPancake PoolContract = "pancakepool"
-const PoolCurveStableSwapNG PoolContract = "curvestableswapngpool"
-const PoolCurveTwoCryptoOptimized PoolContract = "curvetwocryptoptimizedpool"
+const PoolCurve PoolContract = "curvepool"
+const StableSwapNG PoolType = "stableswapng"
+const TwocryptoOptimized PoolType = "twocryptooptimized"
 
 // maps exchange to pool contract of that exchange
 var SupportedExchanges = map[ExchangeName]PoolContract{
@@ -23,7 +23,5 @@ var SupportedExchanges = map[ExchangeName]PoolContract{
 	ExchangeCamelot:  PoolAlgebra,
 	ExchangeBalancer: PoolBalancer,
 	ExchangePancake:  PoolPancake,
-
-	ExchangeCurveStableSwapNG:       PoolCurveStableSwapNG,
-	ExchangeCurveTwoCryptoOptimized: PoolCurveTwoCryptoOptimized,
+	ExchangeCurve:    PoolCurve,
 }

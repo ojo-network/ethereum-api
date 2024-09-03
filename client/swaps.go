@@ -9,8 +9,7 @@ import (
 	balancerpool "github.com/ojo-network/ethereum-api/abi/balancer/pool"
 	"github.com/ojo-network/ethereum-api/abi/balancer/vault"
 	"github.com/ojo-network/ethereum-api/abi/camelot"
-	"github.com/ojo-network/ethereum-api/abi/curve/stableswapng/curvestableswapng"
-	"github.com/ojo-network/ethereum-api/abi/curve/twocryptooptimized/curvetwocryptoptimized"
+	"github.com/ojo-network/ethereum-api/abi/curve"
 	"github.com/ojo-network/ethereum-api/abi/pancake"
 	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/ethereum-api/pool"
@@ -45,15 +44,17 @@ func (c *Client) WatchSwapsAndRestart(p pool.Pool) {
 					if err != nil {
 						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
 					}
-				case pool.PoolCurveStableSwapNG:
-					err := c.WatchCurveStableSwapNGSwapEvent(p)
-					if err != nil {
-						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
-					}
-				case pool.PoolCurveTwoCryptoOptimized:
-					err := c.WatchCurveTwoCryptoOptimizedSwapEvent(p)
-					if err != nil {
-						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
+				case pool.PoolCurve:
+					if p.PoolType == pool.StableSwapNG {
+						err := c.WatchCurveStableSwapNGSwapEvent(p)
+						if err != nil {
+							c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
+						}
+					} else if p.PoolType == pool.TwocryptoOptimized {
+						err := c.WatchCurveTwoCryptoOptimizedSwapEvent(p)
+						if err != nil {
+							c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
+						}
 					}
 				}
 			}
@@ -226,17 +227,17 @@ func (c *Client) WatchPancakeSwapEvent(p pool.Pool) error {
 
 // WatchCurveStableSwapNGSwapEvent watches for swap events on a curve StableSwapNG pool
 func (c *Client) WatchCurveStableSwapNGSwapEvent(p pool.Pool) error {
-	curveCaller, err := curvestableswapng.NewCurveStableSwapNGCaller(common.HexToAddress(p.Address), c.ethClient)
+	curveCaller, err := curve.NewStableSwapNGCaller(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		return err
 	}
 
-	curveFilterer, err := curvestableswapng.NewCurveStableSwapNGFilterer(common.HexToAddress(p.Address), c.ethClient)
+	curveFilterer, err := curve.NewStableSwapNGFilterer(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		return err
 	}
 
-	eventSink := make(chan *curvestableswapng.CurveStableSwapNGTokenExchange)
+	eventSink := make(chan *curve.StableSwapNGTokenExchange)
 	opts := &bind.WatchOpts{Start: nil, Context: c.ctx}
 	c.logger.Info().Msgf("subscribing to %s swap events", p.ExchangePair())
 	subscription, err := curveFilterer.WatchTokenExchange(opts, eventSink, nil)
@@ -273,7 +274,7 @@ func (c *Client) WatchCurveStableSwapNGSwapEvent(p pool.Pool) error {
 
 // WatchCurveTwoCryptoOptimizedSwapEvent watches for swap events on a curve TwoCryptoOptimized pool
 func (c *Client) WatchCurveTwoCryptoOptimizedSwapEvent(p pool.Pool) error {
-	curveCaller, err := curvetwocryptoptimized.NewCurveTwoCryptoOptimizedCaller(
+	curveCaller, err := curve.NewTwocryptoOptimizedCaller(
 		common.HexToAddress(p.Address),
 		c.ethClient,
 	)
@@ -281,7 +282,7 @@ func (c *Client) WatchCurveTwoCryptoOptimizedSwapEvent(p pool.Pool) error {
 		return err
 	}
 
-	curveFilterer, err := curvetwocryptoptimized.NewCurveTwoCryptoOptimizedFilterer(
+	curveFilterer, err := curve.NewTwocryptoOptimizedFilterer(
 		common.HexToAddress(p.Address),
 		c.ethClient,
 	)
@@ -289,7 +290,7 @@ func (c *Client) WatchCurveTwoCryptoOptimizedSwapEvent(p pool.Pool) error {
 		return err
 	}
 
-	eventSink := make(chan *curvetwocryptoptimized.CurveTwoCryptoOptimizedTokenExchange)
+	eventSink := make(chan *curve.TwocryptoOptimizedTokenExchange)
 	opts := &bind.WatchOpts{Start: nil, Context: c.ctx}
 	c.logger.Info().Msgf("subscribing to %s swap events", p.ExchangePair())
 	subscription, err := curveFilterer.WatchTokenExchange(opts, eventSink, nil)
@@ -306,16 +307,13 @@ func (c *Client) WatchCurveTwoCryptoOptimizedSwapEvent(p pool.Pool) error {
 		case err := <-subscription.Err():
 			return err
 		case event := <-eventSink:
-			// price comes inverted
-			poolPriceInverted, err := curveCaller.LastPrice(nil, big.NewInt(0))
+			lpPrice, err := curveCaller.LpPrice(nil)
 			if err != nil {
 				return err
 			}
-			scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(36), nil)
-			poolPrice := new(big.Int).Quo(scale, poolPriceInverted)
 
-			swap := p.ConvertCurveTwoCryptoOptimizedEventToSwap(event, poolPrice)
-			spotPrice := p.ConvertCurveTwoCryptoOptimizedEventToSpotPrice(event, poolPrice)
+			swap := p.ConvertCurveTwoCryptoOptimizedEventToSwap(event, lpPrice)
+			spotPrice := p.ConvertCurveTwoCryptoOptimizedEventToSpotPrice(event, lpPrice)
 			c.logger.Info().Interface("curve twocryptooptimized swap", swap).
 				Msg("curve twocryptooptimized swap event received")
 			c.indexer.AddSwap(swap)

@@ -107,3 +107,68 @@ exchanges:
 	_, err = ParseConfig(tmpfile.Name())
 	assert.ErrorContains(t, err, "unsupported exchange: invalid exchange")
 }
+
+func TestValidPoolTypes(t *testing.T) {
+	tmpfile, err := os.CreateTemp("", "config_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	_, err = tmpfile.Write([]byte(`
+exchanges:
+  - name: curve
+    node_urls:
+      - http://node1.com
+    pools:
+      - base: "WBTC"
+        quote: "WETH"
+        address: "testAddress1"
+        pool_type: "stableswapng"
+      - base: "WETH"
+        quote: "USDC"
+        address: "testAddress2"
+        pool_type: "twocryptooptimized"
+    server:
+      listen_addr: "http://localhost:8080"
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestInvalidPoolType(t *testing.T) {
+	tmpfile, err := os.CreateTemp("", "config_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	_, err = tmpfile.Write([]byte(`
+exchanges:
+  - name: curve
+    node_urls:
+      - http://node1.com
+    pools:
+      - base: "WBTC"
+        quote: "WETH"
+        address: "testAddress1"
+        pool_type: "invalid pool type"
+    server:
+      listen_addr: "http://localhost:8080"
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = ParseConfig(tmpfile.Name())
+	assert.ErrorContains(t, err, "unsupported pool type for curve exchange: invalid pool type")
+}

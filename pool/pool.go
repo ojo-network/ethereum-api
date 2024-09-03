@@ -7,8 +7,7 @@ import (
 
 	"github.com/ojo-network/ethereum-api/abi/balancer/vault"
 	"github.com/ojo-network/ethereum-api/abi/camelot"
-	"github.com/ojo-network/ethereum-api/abi/curve/stableswapng/curvestableswapng"
-	"github.com/ojo-network/ethereum-api/abi/curve/twocryptooptimized/curvetwocryptoptimized"
+	"github.com/ojo-network/ethereum-api/abi/curve"
 	"github.com/ojo-network/ethereum-api/abi/pancake"
 	"github.com/ojo-network/ethereum-api/abi/uniswap"
 	"github.com/ojo-network/indexer/indexer"
@@ -24,6 +23,9 @@ type Pool struct {
 	BaseDecimal    uint64   `yaml:"base_decimal"`
 	QuoteDecimal   uint64   `yaml:"quote_decimal"`
 	InvertPrice    bool     `yaml:"invert_price"`
+
+	// used for exchanges with multiple pool implementations
+	PoolType PoolType `yaml:"pool_type"`
 }
 
 func (p *Pool) ExchangePair() string {
@@ -107,7 +109,7 @@ func (p *Pool) ConvertPancakeEventToSwap(event *pancake.PancakeSwap) indexer.Swa
 }
 
 func (p *Pool) ConvertCurveStableSwapNGEventToSpotPrice(
-	event *curvestableswapng.CurveStableSwapNGTokenExchange,
+	event *curve.StableSwapNGTokenExchange,
 	price *big.Int,
 ) indexer.SpotPrice {
 	return indexer.SpotPrice{
@@ -119,7 +121,7 @@ func (p *Pool) ConvertCurveStableSwapNGEventToSpotPrice(
 }
 
 func (p *Pool) ConvertCurveStableSwapNGEventToSwap(
-	event *curvestableswapng.CurveStableSwapNGTokenExchange,
+	event *curve.StableSwapNGTokenExchange,
 	price *big.Int,
 ) indexer.Swap {
 	return indexer.Swap{
@@ -132,7 +134,7 @@ func (p *Pool) ConvertCurveStableSwapNGEventToSwap(
 }
 
 func (p *Pool) ConvertCurveTwoCryptoOptimizedEventToSpotPrice(
-	event *curvetwocryptoptimized.CurveTwoCryptoOptimizedTokenExchange,
+	event *curve.TwocryptoOptimizedTokenExchange,
 	price *big.Int,
 ) indexer.SpotPrice {
 	return indexer.SpotPrice{
@@ -144,7 +146,7 @@ func (p *Pool) ConvertCurveTwoCryptoOptimizedEventToSpotPrice(
 }
 
 func (p *Pool) ConvertCurveTwoCryptoOptimizedEventToSwap(
-	event *curvetwocryptoptimized.CurveTwoCryptoOptimizedTokenExchange,
+	event *curve.TwocryptoOptimizedTokenExchange,
 	price *big.Int,
 ) indexer.Swap {
 	return indexer.Swap{
@@ -222,7 +224,7 @@ func (p *Pool) swapPancakeVolume(event *pancake.PancakeSwap) sdkmath.LegacyDec {
 }
 
 func (p *Pool) swapCurveStableSwapNGVolume(
-	event *curvestableswapng.CurveStableSwapNGTokenExchange,
+	event *curve.StableSwapNGTokenExchange,
 ) sdkmath.LegacyDec {
 	if p.InvertPrice {
 		volume := sdkmath.LegacyNewDecFromBigInt(event.TokensBought).Abs()
@@ -234,7 +236,7 @@ func (p *Pool) swapCurveStableSwapNGVolume(
 }
 
 func (p *Pool) swapCurveTwoCryptoOptimizedVolume(
-	event *curvetwocryptoptimized.CurveTwoCryptoOptimizedTokenExchange,
+	event *curve.TwocryptoOptimizedTokenExchange,
 ) sdkmath.LegacyDec {
 	if p.InvertPrice {
 		volume := sdkmath.LegacyNewDecFromBigInt(event.TokensBought).Abs()
