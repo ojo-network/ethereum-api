@@ -23,6 +23,9 @@ type Pool struct {
 	BaseDecimal    uint64   `yaml:"base_decimal"`
 	QuoteDecimal   uint64   `yaml:"quote_decimal"`
 	InvertPrice    bool     `yaml:"invert_price"`
+
+	// used for exchanges with multiple pool implementations
+	PoolType PoolType `yaml:"pool_type"`
 }
 
 func (p *Pool) ExchangePair() string {
@@ -105,7 +108,10 @@ func (p *Pool) ConvertPancakeEventToSwap(event *pancake.PancakeSwap) indexer.Swa
 	}
 }
 
-func (p *Pool) ConvertCurveEventToSpotPrice(event *curve.CurveTokenExchange, price *big.Int) indexer.SpotPrice {
+func (p *Pool) ConvertCurveStableSwapNGEventToSpotPrice(
+	event *curve.StableSwapNGTokenExchange,
+	price *big.Int,
+) indexer.SpotPrice {
 	return indexer.SpotPrice{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
@@ -114,13 +120,41 @@ func (p *Pool) ConvertCurveEventToSpotPrice(event *curve.CurveTokenExchange, pri
 	}
 }
 
-func (p *Pool) ConvertCurveEventToSwap(event *curve.CurveTokenExchange, price *big.Int) indexer.Swap {
+func (p *Pool) ConvertCurveStableSwapNGEventToSwap(
+	event *curve.StableSwapNGTokenExchange,
+	price *big.Int,
+) indexer.Swap {
 	return indexer.Swap{
 		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
 		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(price, 18),
-		Volume:       p.swapCurveVolume(event),
+		Volume:       p.swapCurveStableSwapNGVolume(event),
+	}
+}
+
+func (p *Pool) ConvertCurveTwoCryptoOptimizedEventToSpotPrice(
+	event *curve.TwocryptoOptimizedTokenExchange,
+	price *big.Int,
+) indexer.SpotPrice {
+	return indexer.SpotPrice{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        p.SqrtPriceX96ToDec(price),
+	}
+}
+
+func (p *Pool) ConvertCurveTwoCryptoOptimizedEventToSwap(
+	event *curve.TwocryptoOptimizedTokenExchange,
+	price *big.Int,
+) indexer.Swap {
+	return indexer.Swap{
+		BlockNum:     indexer.BlockNum(event.Raw.BlockNumber),
+		Timestamp:    utils.CurrentUnixTime(),
+		ExchangePair: p.ExchangePair(),
+		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(price, 18),
+		Volume:       p.swapCurveTwoCryptoOptimizedVolume(event),
 	}
 }
 
@@ -189,7 +223,21 @@ func (p *Pool) swapPancakeVolume(event *pancake.PancakeSwap) sdkmath.LegacyDec {
 	}
 }
 
-func (p *Pool) swapCurveVolume(event *curve.CurveTokenExchange) sdkmath.LegacyDec {
+func (p *Pool) swapCurveStableSwapNGVolume(
+	event *curve.StableSwapNGTokenExchange,
+) sdkmath.LegacyDec {
+	if p.InvertPrice {
+		volume := sdkmath.LegacyNewDecFromBigInt(event.TokensBought).Abs()
+		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))
+	} else {
+		volume := sdkmath.LegacyNewDecFromBigInt(event.TokensSold).Abs()
+		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.BaseDecimal)))
+	}
+}
+
+func (p *Pool) swapCurveTwoCryptoOptimizedVolume(
+	event *curve.TwocryptoOptimizedTokenExchange,
+) sdkmath.LegacyDec {
 	if p.InvertPrice {
 		volume := sdkmath.LegacyNewDecFromBigInt(event.TokensBought).Abs()
 		return volume.Quo(sdkmath.LegacyNewDec(10).Power(uint64(p.QuoteDecimal)))

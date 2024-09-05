@@ -45,9 +45,16 @@ func (c *Client) WatchSwapsAndRestart(p pool.Pool) {
 						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
 					}
 				case pool.PoolCurve:
-					err := c.WatchCurveSwapEvent(p)
-					if err != nil {
-						c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
+					if p.PoolType == pool.StableSwapNG {
+						err := c.WatchCurveStableSwapNGSwapEvent(p)
+						if err != nil {
+							c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
+						}
+					} else if p.PoolType == pool.TwocryptoOptimized {
+						err := c.WatchCurveTwoCryptoOptimizedSwapEvent(p)
+						if err != nil {
+							c.reportError(fmt.Errorf("error watching %s swap events", p.ExchangePair()))
+						}
 					}
 				}
 			}
@@ -218,19 +225,19 @@ func (c *Client) WatchPancakeSwapEvent(p pool.Pool) error {
 	}
 }
 
-// WatchCurveSwapEvent watches for swap events on a curve pool
-func (c *Client) WatchCurveSwapEvent(p pool.Pool) error {
-	curveCaller, err := curve.NewCurveCaller(common.HexToAddress(p.Address), c.ethClient)
+// WatchCurveStableSwapNGSwapEvent watches for swap events on a curve StableSwapNG pool
+func (c *Client) WatchCurveStableSwapNGSwapEvent(p pool.Pool) error {
+	curveCaller, err := curve.NewStableSwapNGCaller(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		return err
 	}
 
-	curveFilterer, err := curve.NewCurveFilterer(common.HexToAddress(p.Address), c.ethClient)
+	curveFilterer, err := curve.NewStableSwapNGFilterer(common.HexToAddress(p.Address), c.ethClient)
 	if err != nil {
 		return err
 	}
 
-	eventSink := make(chan *curve.CurveTokenExchange)
+	eventSink := make(chan *curve.StableSwapNGTokenExchange)
 	opts := &bind.WatchOpts{Start: nil, Context: c.ctx}
 	c.logger.Info().Msgf("subscribing to %s swap events", p.ExchangePair())
 	subscription, err := curveFilterer.WatchTokenExchange(opts, eventSink, nil)
@@ -255,9 +262,63 @@ func (c *Client) WatchCurveSwapEvent(p pool.Pool) error {
 			scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(36), nil)
 			poolPrice := new(big.Int).Quo(scale, poolPriceInverted)
 
-			swap := p.ConvertCurveEventToSwap(event, poolPrice)
-			spotPrice := p.ConvertCurveEventToSpotPrice(event, poolPrice)
-			c.logger.Info().Interface("curve swap", swap).Msg("curve swap event received")
+			swap := p.ConvertCurveStableSwapNGEventToSwap(event, poolPrice)
+			spotPrice := p.ConvertCurveStableSwapNGEventToSpotPrice(event, poolPrice)
+			c.logger.Info().Interface("curve stableswapng swap", swap).
+				Msg("curve stableswapng swap event received")
+			c.indexer.AddSwap(swap)
+			c.indexer.AddPrice(spotPrice)
+		}
+	}
+}
+
+// WatchCurveTwoCryptoOptimizedSwapEvent watches for swap events on a curve TwoCryptoOptimized pool
+func (c *Client) WatchCurveTwoCryptoOptimizedSwapEvent(p pool.Pool) error {
+	curveCaller, err := curve.NewTwocryptoOptimizedCaller(
+		common.HexToAddress(p.Address),
+		c.ethClient,
+	)
+	if err != nil {
+		return err
+	}
+
+	curveFilterer, err := curve.NewTwocryptoOptimizedFilterer(
+		common.HexToAddress(p.Address),
+		c.ethClient,
+	)
+	if err != nil {
+		return err
+	}
+
+	eventSink := make(chan *curve.TwocryptoOptimizedTokenExchange)
+	opts := &bind.WatchOpts{Start: nil, Context: c.ctx}
+	c.logger.Info().Msgf("subscribing to %s swap events", p.ExchangePair())
+	subscription, err := curveFilterer.WatchTokenExchange(opts, eventSink, nil)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-c.ctx.Done():
+			c.logger.Info().Msgf("unsubscribing from %s swap events", p.ExchangePair())
+			subscription.Unsubscribe()
+			return nil
+		case err := <-subscription.Err():
+			return err
+		case event := <-eventSink:
+			// price comes inverted
+			poolPriceInverted, err := curveCaller.LastPrices(nil)
+			if err != nil {
+				return err
+			}
+			scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(36), nil)
+			poolPrice := new(big.Int).Quo(scale, poolPriceInverted)
+
+			swap := p.ConvertCurveTwoCryptoOptimizedEventToSwap(event, poolPrice)
+			spotPrice := p.ConvertCurveTwoCryptoOptimizedEventToSpotPrice(event, poolPrice)
+			c.logger.Info().Interface("curve twocryptooptimized swap", swap).
+				Msg("curve twocryptooptimized swap event received")
 			c.indexer.AddSwap(swap)
 			c.indexer.AddPrice(spotPrice)
 		}

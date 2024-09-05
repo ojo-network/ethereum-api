@@ -66,6 +66,15 @@ func (c Config) Validate() (err error) {
 		if _, ok := pool.SupportedExchanges[exchange.Name]; !ok {
 			return fmt.Errorf("unsupported exchange: %s", exchange.Name)
 		}
+
+		// validate pool types of curve pools
+		if exchange.Name == pool.ExchangeCurve {
+			for _, p := range exchange.Pools {
+				if p.PoolType != pool.StableSwapNG && p.PoolType != pool.TwocryptoOptimized {
+					return fmt.Errorf("unsupported pool type for curve exchange: %s", p.PoolType)
+				}
+			}
+		}
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package pool
 
 type ExchangeName string
 type PoolContract string
+type PoolType string
 
 const ExchangeUniswap ExchangeName = "uniswap"
 const ExchangeCamelot ExchangeName = "camelot"
@@ -13,6 +14,8 @@ const PoolAlgebra PoolContract = "algebrapool"
 const PoolBalancer PoolContract = "balancerpool"
 const PoolPancake PoolContract = "pancakepool"
 const PoolCurve PoolContract = "curvepool"
+const StableSwapNG PoolType = "stableswapng"
+const TwocryptoOptimized PoolType = "twocryptooptimized"
 
 // maps exchange to pool contract of that exchange
 var SupportedExchanges = map[ExchangeName]PoolContract{

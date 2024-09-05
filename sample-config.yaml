@@ -154,6 +154,14 @@ exchanges:
         base_decimal: 18
         quote_decimal: 18
         invert_price: false
+        pool_type: "stableswapng"
+      - address: "0x19b8524665abac613d82ece5d8347ba44c714bdd"
+        base: "YNETH"
+        quote: "WSTETH"
+        base_decimal: 18
+        quote_decimal: 18
+        invert_price: false
+        pool_type: "twocryptooptimized"
     server:
       listen_addr: "0.0.0.0:5009"
       write_timeout: "20s"
