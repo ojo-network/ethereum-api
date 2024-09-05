@@ -307,13 +307,16 @@ func (c *Client) WatchCurveTwoCryptoOptimizedSwapEvent(p pool.Pool) error {
 		case err := <-subscription.Err():
 			return err
 		case event := <-eventSink:
-			lpPrice, err := curveCaller.LpPrice(nil)
+			// price comes inverted
+			poolPriceInverted, err := curveCaller.LastPrices(nil)
 			if err != nil {
 				return err
 			}
+			scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(36), nil)
+			poolPrice := new(big.Int).Quo(scale, poolPriceInverted)
 
-			swap := p.ConvertCurveTwoCryptoOptimizedEventToSwap(event, lpPrice)
-			spotPrice := p.ConvertCurveTwoCryptoOptimizedEventToSpotPrice(event, lpPrice)
+			swap := p.ConvertCurveTwoCryptoOptimizedEventToSwap(event, poolPrice)
+			spotPrice := p.ConvertCurveTwoCryptoOptimizedEventToSpotPrice(event, poolPrice)
 			c.logger.Info().Interface("curve twocryptooptimized swap", swap).
 				Msg("curve twocryptooptimized swap event received")
 			c.indexer.AddSwap(swap)

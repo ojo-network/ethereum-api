@@ -175,16 +175,19 @@ func (c *Client) QueryCurveTwoCryptoOptimizedSpotPrice(p pool.Pool, blockNum uin
 		return indexer.SpotPrice{}
 	}
 
-	lpPrice, err := curveCaller.LpPrice(nil)
+	// price comes inverted
+	poolPriceInverted, err := curveCaller.LastPrices(nil)
 	if err != nil {
-		c.reportError(fmt.Errorf("error getting %s token lp price from pool: %w", p.ExchangePair(), err))
+		c.reportError(fmt.Errorf("error getting %s token last price from pool: %w", p.ExchangePair(), err))
 		return indexer.SpotPrice{}
 	}
+	scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(36), nil)
+	poolPrice := new(big.Int).Quo(scale, poolPriceInverted)
 
 	return indexer.SpotPrice{
 		BlockNum:     indexer.BlockNum(blockNum),
 		Timestamp:    utils.CurrentUnixTime(),
 		ExchangePair: p.ExchangePair(),
-		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(lpPrice, 18),
+		Price:        sdkmath.LegacyNewDecFromBigIntWithPrec(poolPrice, 18),
 	}
 }
