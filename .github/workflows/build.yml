@@ -18,7 +18,7 @@ jobs:
         targetos: [darwin, linux]
     name: ethereum-api ${{ matrix.arch }} for ${{ matrix.targetos }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup go
         uses: actions/setup-go@v4
         with:
